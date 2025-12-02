@@ -9,34 +9,31 @@
             <h2 class="mb-3 text-center">Login administrador</h2>
 
             <form method="post" action="{{ url_for('login') }}">
-                <!-- Campo usuario: el name AHORA es "usuario" -->
                 <div class="mb-3">
                     <label for="usuario" class="form-label">Usuario</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        id="usuario"
-                        name="usuario"
-                        required
-                        value="admin">
+                    <input type="text"
+                           class="form-control"
+                           id="usuario"
+                           name="usuario"
+                           value="admin"
+                           required>
                 </div>
 
-                <!-- Campo contraseña: el name AHORA es "clave" -->
                 <div class="mb-3">
                     <label for="clave" class="form-label">Contraseña</label>
-                    <input
-                        type="password"
-                        class="form-control"
-                        id="clave"
-                        name="clave"
-                        required>
+                    <input type="password"
+                           class="form-control"
+                           id="clave"
+                           name="clave"
+                           required>
                 </div>
 
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Entrar</button>
+                    <button type="submit" class="btn btn-primary">
+                        Entrar
+                    </button>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
