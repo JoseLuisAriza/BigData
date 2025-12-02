@@ -1,22 +1,51 @@
 {% extends "base.html" %}
 
-{% block title %}Panel de administración · {{ app_nombre }}{% endblock %}
+{% block title %}Panel administrador - {{ app_nombre }}{% endblock %}
 
 {% block content %}
-<div class="mt-4">
-  <h1 class="h3 mb-3">Panel de administración</h1>
-  <p class="mb-4">Bienvenido, {{ session.get('usuario') }}.</p>
+<h1 class="mb-4">Panel de administración</h1>
 
-  <div class="list-group">
-    <a href="{{ url_for('admin_usuarios') }}" class="list-group-item list-group-item-action">
-      Administrar usuarios
-    </a>
-    <a href="{{ url_for('admin_elastic') }}" class="list-group-item list-group-item-action">
-      Administrar Elastic
-    </a>
-    <a href="{{ url_for('cargar_archivos') }}" class="list-group-item list-group-item-action">
-      Cargar libros a Elastic
-    </a>
-  </div>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="card card-dark h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title">Cargar e indexar libros</h2>
+                <p class="card-text">
+                    Sube un archivo JSON con los libros. Se guardarán en MongoDB y se indexarán en Elasticsearch.
+                </p>
+                <a href="{{ url_for('cargar_archivos') }}" class="btn btn-outline-primary">
+                    Ir a carga de archivos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <div class="card card-dark h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title">Estado de Elasticsearch</h2>
+                <p class="card-text">
+                    Consulta el índice actual y la cantidad de documentos indexados.
+                </p>
+                <a href="{{ url_for('admin_elastic') }}" class="btn btn-outline-primary">
+                    Ir a administrar Elastic
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <div class="card card-dark h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title">Gestión de usuarios</h2>
+                <p class="card-text">
+                    Sección informativa para administración de usuarios (demo).
+                </p>
+                <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-secondary">
+                    Ver usuarios
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
