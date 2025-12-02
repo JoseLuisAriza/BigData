@@ -1,74 +1,141 @@
 import os
+from typing import Any, Dict, List, Optional
+
 from elasticsearch import Elasticsearch
 
-ES_CLOUD_URL = os.environ.get("ES_CLOUD_URL")
-ES_API_KEY = os.environ.get("ES_API_KEY")
-ES_INDEX = os.environ.get("ES_INDEX", "libros_bigdata")
+# -------------------------------------------------------
+# Configuración de cliente
+# -------------------------------------------------------
 
-if not ES_CLOUD_URL or not ES_API_KEY:
-    raise RuntimeError(
-        "ES_CLOUD_URL y ES_API_KEY deben estar definidos como variables de entorno."
-    )
 
-# Cliente global
-_es = Elasticsearch(ES_CLOUD_URL, api_key=ES_API_KEY)
+def _get_env(*names: str, default: Optional[str] = None) -> Optional[str]:
+    """
+    Devuelve el primer valor de variable de entorno que exista
+    entre la lista de nombres dada.
+    """
+    for name in names:
+        value = os.getenv(name)
+        if value:
+            return value
+    return default
+
+
+ELASTIC_HOST = _get_env(
+    "ELASTIC_HOST",
+    "ELASTICSEARCH_HOST",
+    "ELASTIC_URL",
+    "ELASTICSEARCH_URL",
+    default="http://localhost:9200",
+)
+
+ELASTIC_USER = _get_env(
+    "ELASTIC_USER",
+    "ELASTIC_USERNAME",
+    "ELASTICSEARCH_USER",
+)
+
+ELASTIC_PASSWORD = _get_env(
+    "ELASTIC_PASSWORD",
+    "ELASTIC_PASS",
+    "ELASTICSEARCH_PASSWORD",
+)
+
+INDEX_NAME = _get_env(
+    "ELASTIC_INDEX",
+    "ELASTICSEARCH_INDEX",
+    "ELASTIC_INDICE",
+    default="libros",
+)
 
 
 def get_client() -> Elasticsearch:
-    return _es
-
-
-def get_index_name() -> str:
-    return ES_INDEX
-
-
-def crear_indice_si_no_existe():
     """
-    Crea el índice si no existe.
+    Crea un cliente de Elasticsearch usando las variables de entorno.
     """
+    kwargs: Dict[str, Any] = {"hosts": [ELASTIC_HOST]}
+    if ELASTIC_USER and ELASTIC_PASSWORD:
+        kwargs["basic_auth"] = (ELASTIC_USER, ELASTIC_PASSWORD)
+
+    # Para clusters con certificados raros (p. ej. pruebas)
+    kwargs.setdefault("verify_certs", False)
+
+    return Elasticsearch(**kwargs)
+
+
+# -------------------------------------------------------
+# Utilidades de índice y búsqueda
+# -------------------------------------------------------
+
+
+def crear_indice_si_no_existe() -> None:
     es = get_client()
-    if es.indices.exists(index=ES_INDEX):
+    if es.indices.exists(index=INDEX_NAME):
         return
 
-    es.indices.create(
-        index=ES_INDEX,
-        mappings={
+    mapping = {
+        "mappings": {
             "properties": {
                 "titulo": {"type": "text"},
                 "autor": {"type": "text"},
                 "anio": {"type": "integer"},
-                "texto": {"type": "text"},
+                "descripcion": {"type": "text"},
+                "archivo": {"type": "keyword"},
+                "ruta_archivo": {"type": "keyword"},
             }
-        },
-    )
+        }
+    }
+    es.indices.create(index=INDEX_NAME, **mapping)
 
 
-def contar_documentos() -> int:
+def indexar_libro(
+    titulo: str,
+    autor: str,
+    anio: Optional[int],
+    descripcion: str,
+    archivo: str,
+    ruta_archivo: str,
+) -> str:
     """
-    Número total de documentos en el índice.
+    Indexa un documento sencillo en Elasticsearch.
+    Devuelve el ID asignado.
     """
+    crear_indice_si_no_existe()
     es = get_client()
-    if not es.indices.exists(index=ES_INDEX):
-        return 0
-    resp = es.count(index=ES_INDEX, query={"match_all": {}})
-    return resp["count"]
+
+    doc = {
+        "titulo": titulo,
+        "autor": autor,
+        "anio": anio,
+        "descripcion": descripcion,
+        "archivo": archivo,
+        "ruta_archivo": ruta_archivo,
+    }
+
+    resp = es.index(index=INDEX_NAME, document=doc)
+    return resp.get("_id", "")
 
 
-def buscar_libros(texto=None, autor=None, anio_desde=None, anio_hasta=None, size=50):
+def buscar_libros(
+    termino: str = "",
+    autor: str = "",
+    anio_desde: str = "",
+    anio_hasta: str = "",
+) -> List[Dict[str, Any]]:
     """
-    Ejecuta una búsqueda en Elastic con filtros opcionales.
-    Devuelve (lista_resultados, total).
+    Ejecuta una búsqueda básica sobre el índice de libros.
     """
+    crear_indice_si_no_existe()
     es = get_client()
+
     must = []
     filtros = []
 
-    if texto:
+    if termino:
         must.append(
             {
                 "multi_match": {
-                    "query": texto,
-                    "fields": ["titulo^3", "autor^2", "texto"],
+                    "query": termino,
+                    "fields": ["titulo^3", "autor^2", "descripcion"],
                 }
             }
         )
@@ -77,52 +144,58 @@ def buscar_libros(texto=None, autor=None, anio_desde=None, anio_hasta=None, size
         must.append({"match": {"autor": autor}})
 
     if anio_desde or anio_hasta:
-        rango = {}
+        rango: Dict[str, Any] = {}
         if anio_desde:
-            rango["gte"] = int(anio_desde)
+            try:
+                rango["gte"] = int(anio_desde)
+            except ValueError:
+                pass
         if anio_hasta:
-            rango["lte"] = int(anio_hasta)
-        filtros.append({"range": {"anio": rango}})
+            try:
+                rango["lte"] = int(anio_hasta)
+            except ValueError:
+                pass
+        if rango:
+            filtros.append({"range": {"anio": rango}})
 
     if not must and not filtros:
-        query = {"match_all": {}}
+        query: Dict[str, Any] = {"match_all": {}}
     else:
-        query = {"bool": {}}
+        bool_query: Dict[str, Any] = {}
         if must:
-            query["bool"]["must"] = must
+            bool_query["must"] = must
         if filtros:
-            query["bool"]["filter"] = filtros
+            bool_query["filter"] = filtros
+        query = {"bool": bool_query}
 
-    resp = es.search(index=ES_INDEX, query=query, size=size)
+    resp = es.search(index=INDEX_NAME, query=query, size=50)
 
-    resultados = []
+    resultados: List[Dict[str, Any]] = []
     for hit in resp["hits"]["hits"]:
-        src = hit["_source"]
+        src = hit.get("_source", {})
         resultados.append(
             {
+                "id": hit.get("_id"),
                 "titulo": src.get("titulo"),
                 "autor": src.get("autor"),
                 "anio": src.get("anio"),
-                "texto": src.get("texto"),
-                "score": hit["_score"],
+                "descripcion": src.get("descripcion"),
+                "archivo": src.get("archivo"),
             }
         )
 
-    total = resp["hits"]["total"]["value"]
-    return resultados, total
+    return resultados
 
 
-def cargar_libro(titulo, autor, anio, texto):
+def obtener_estado_indice() -> Dict[str, Any]:
     """
-    Inserta un nuevo documento en el índice.
+    Devuelve información básica del índice para mostrar en /admin/elastic.
     """
-    es = get_client()
-    crear_indice_si_no_existe()
-
-    doc = {
-        "titulo": titulo,
-        "autor": autor,
-        "anio": int(anio) if anio else None,
-        "texto": texto,
-    }
-    es.index(index=ES_INDEX, document=doc)
+    try:
+        crear_indice_si_no_existe()
+        es = get_client()
+        count_resp = es.count(index=INDEX_NAME)
+        total = int(count_resp.get("count", 0))
+        return {"indice": INDEX_NAME, "total_docs": total, "error": None}
+    except Exception as exc:
+        return {"indice": None, "total_docs": 0, "error": str(exc)}
