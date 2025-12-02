@@ -63,46 +63,46 @@ def landing():
     # Landing con info del proyecto
     return render_template("landing.html")
 
-
-@app.route("/buscar", methods=["GET", "POST"])
+@app.route("/buscar", methods=["GET"])
 def buscar():
-    if request.method == "POST":
-        texto = request.form.get("texto") or None
-        autor = request.form.get("autor") or None
-        anio_desde = request.form.get("anio_desde") or None
-        anio_hasta = request.form.get("anio_hasta") or None
-    else:
-        # también permitimos GET con querystring para que no se pierdan los filtros
-        texto = request.args.get("texto") or None
-        autor = request.args.get("autor") or None
-        anio_desde = request.args.get("anio_desde") or None
-        anio_hasta = request.args.get("anio_hasta") or None
+    from elastic_helper import buscar_libros  # por si no está ya importado arriba
 
-    def to_int(x):
+    # Leer filtros desde la query-string (?texto=...&autor=...)
+    texto = (request.args.get("texto") or "").strip()
+    autor = (request.args.get("autor") or "").strip()
+    anio_desde_raw = (request.args.get("anio_desde") or "").strip()
+    anio_hasta_raw = (request.args.get("anio_hasta") or "").strip()
+
+    # Convertir años a entero si se puede
+    def to_int_or_none(v):
         try:
-            return int(x) if x else None
+            return int(v) if v else None
         except ValueError:
             return None
 
-    anio_desde_i = to_int(anio_desde)
-    anio_hasta_i = to_int(anio_hasta)
+    anio_desde = to_int_or_none(anio_desde_raw)
+    anio_hasta = to_int_or_none(anio_hasta_raw)
 
-    total, docs = buscar_libros(
-        texto=texto,
-        autor=autor,
-        anio_desde=anio_desde_i,
-        anio_hasta=anio_hasta_i,
-        size=30,
-    )
+    # Si no hay filtros, mostramos todo (match_all) hasta 50 libros
+    if not (texto or autor or anio_desde or anio_hasta):
+        total, libros = buscar_libros(size=50)
+    else:
+        total, libros = buscar_libros(
+            texto=texto or None,
+            autor=autor or None,
+            anio_desde=anio_desde,
+            anio_hasta=anio_hasta,
+            size=50,
+        )
 
     return render_template(
         "resultados.html",
-        total_total=total,
-        documentos=docs,
-        texto=texto or "",
-        autor=autor or "",
-        anio_desde=anio_desde or "",
-        anio_hasta=anio_hasta or "",
+        libros=libros,
+        total=total,
+        texto=texto,
+        autor=autor,
+        anio_desde=anio_desde_raw,
+        anio_hasta=anio_hasta_raw,
     )
 
 
