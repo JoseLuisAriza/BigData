@@ -8,16 +8,22 @@ ES_API_KEY = os.environ.get("ES_API_KEY")
 if not ES_CLOUD_URL or not ES_API_KEY:
     raise RuntimeError("Faltan ES_CLOUD_URL o ES_API_KEY en las variables de entorno")
 
+# Cliente global de Elasticsearch
 _es = Elasticsearch(
     ES_CLOUD_URL,
     api_key=ES_API_KEY,
     verify_certs=True,
 )
 
+# Nombre del índice donde cargaste tus libros
 INDEX_NAME = "libros_bigdata"
 
 
-def buscar_libros(texto=None, autor=None, anio_desde=None, anio_hasta=None, size=20):
+def buscar_libros(texto=None, autor=None, anio_desde=None, anio_hasta=None, size=30):
+    """
+    Busca libros en el índice usando texto libre, autor y rango de año.
+    Devuelve: (total_resultados, lista_de_documentos)
+    """
     must = []
     filtros = []
 
@@ -79,3 +85,19 @@ def buscar_libros(texto=None, autor=None, anio_desde=None, anio_hasta=None, size
         })
 
     return total, documentos
+
+
+def contar_documentos():
+    """
+    Devuelve el número total de documentos en el índice.
+    """
+    res = _es.count(index=INDEX_NAME)
+    return res["count"]
+
+
+def agregar_libro(doc: dict):
+    """
+    Inserta un documento (libro) en el índice.
+    Espera un dict con al menos 'titulo'; opcionalmente 'autor', 'anio', 'texto', etc.
+    """
+    _es.index(index=INDEX_NAME, document=doc)
