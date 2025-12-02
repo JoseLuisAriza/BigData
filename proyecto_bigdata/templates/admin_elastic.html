@@ -1,27 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}Administrar Elastic - {{ app_nombre }}{% endblock %}
+{% block title %}Administrar Elastic{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Administrar Elastic</h1>
+<div class="container py-5">
+  <h1 class="mb-4 text-center">Administrar Elastic</h1>
 
-<div class="card card-dark">
-  <div class="card-body">
-    <p><strong>Índice actual:</strong> {{ indice_actual }}</p>
-    <p><strong>Total de documentos indexados:</strong> {{ total_indexados }}</p>
+  <div class="card bg-card text-white mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Índice actual:</h5>
+      <p class="card-text mb-2"><strong>{{ indice_actual }}</strong></p>
 
-    {% if estado_ping %}
-      <p class="text-success">Conexión con Elasticsearch correcta.</p>
-    {% else %}
-      <p class="text-danger">No se pudo hacer ping al servidor de Elasticsearch.</p>
-      {% if error %}
-        <p class="text-danger small">{{ error }}</p>
-      {% endif %}
-      <p class="small">
-        Revisa en Render las variables de entorno <code>ELASTIC_URL</code>,
-        <code>ELASTIC_USER</code> y <code>ELASTIC_PASSWORD</code>.
-      </p>
-    {% endif %}
+      <h5 class="card-title mt-3">Total de documentos indexados:</h5>
+      <p class="card-text mb-0"><strong>{{ total_documentos }}</strong></p>
+    </div>
+  </div>
+
+  {% if error_ping %}
+    <div class="alert alert-danger" role="alert">
+      No se pudo hacer ping al servidor de Elasticsearch.<br>
+      <small>{{ error_ping }}</small>
+    </div>
+  {% endif %}
+
+  {% if error_conexion %}
+    <div class="alert alert-danger" role="alert">
+      No se pudo conectar con Elasticsearch.<br>
+      <small>{{ error_conexion }}</small>
+    </div>
+  {% endif %}
+
+  <div class="alert alert-warning mt-4" role="alert">
+    Si hay problemas de conexión, revisa en Render las variables de entorno
+    <code>ES_CLOUD_URL</code> y <code>ES_API_KEY</code>, y verifica que
+    correspondan al endpoint y a la API key del deployment de Elastic Cloud.
   </div>
 </div>
 {% endblock %}
