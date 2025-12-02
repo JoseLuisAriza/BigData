@@ -1,59 +1,39 @@
 import os
+from datetime import datetime
+from typing import Any, Dict, List
+
 from pymongo import MongoClient
-from werkzeug.security import generate_password_hash, check_password_hash
-
-MONGO_URI = os.environ.get("MONGO_URI")
-if not MONGO_URI:
-    raise RuntimeError("MONGO_URI no está definido en las variables de entorno.")
-
-MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", "bigdata_db")
-
-_client = MongoClient(MONGO_URI)
-_db = _client[MONGO_DB_NAME]
-_usuarios = _db["usuarios"]
 
 
-def get_usuarios_collection():
+def get_collection():
     """
-    Devuelve la colección de usuarios.
+    Devuelve la colección de libros.
+    Si no hay variables de entorno configuradas, usa una BD local.
     """
-    return _usuarios
+    uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+    db_name = os.getenv("MONGO_DB", "mini_biblioteca")
+    col_name = os.getenv("MONGO_COLLECTION", "libros")
+
+    client = MongoClient(uri)
+    db = client[db_name]
+    return db[col_name]
 
 
-def crear_usuario(username: str, password: str, es_admin: bool = False) -> bool:
+def guardar_libro(doc: Dict[str, Any]) -> None:
     """
-    Crea un usuario si no existe. Devuelve True si se crea, False si ya existía.
+    Inserta un documento en la colección de libros.
     """
-    if _usuarios.find_one({"username": username}):
-        return False
-
-    _usuarios.insert_one(
-        {
-            "username": username,
-            "password": generate_password_hash(password),
-            "es_admin": bool(es_admin),
-        }
-    )
-    return True
+    col = get_collection()
+    if "fecha_carga" not in doc:
+        doc["fecha_carga"] = datetime.utcnow()
+    col.insert_one(doc)
 
 
-def validar_login(username: str, password: str):
+def listar_usuarios() -> List[Dict[str, Any]]:
     """
-    Devuelve el documento de usuario si el login es correcto; en caso contrario None.
+    Lista mínima de usuarios para que admin_usuarios.html no reviente.
+    Si quieres algo real, se puede ampliar luego.
     """
-    user = _usuarios.find_one({"username": username})
-    if not user:
-        return None
-
-    if not check_password_hash(user["password"], password):
-        return None
-
-    return user
-
-
-def asegurar_admin_por_defecto():
-    """
-    Si no existe ningún admin, crea uno por defecto (admin / admin).
-    """
-    if _usuarios.count_documents({"es_admin": True}) == 0:
-        crear_usuario("admin", "admin", es_admin=True)
+    return [
+        {"usuario": "admin", "rol": "Administrador"},
+    ]
