@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Administrar Elastic{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Administrar Elastic</h2>
+
+<p>Índice actual: <code>{{ index_name }}</code></p>
+<p>Total de documentos indexados: <strong>{{ total_docs }}</strong></p>
+
+<p class="mt-3">
+  Esta página demuestra la conexión con Elasticsearch y sirve como
+  panel básico de estado.
+</p>
+{% endblock %}
