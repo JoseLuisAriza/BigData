@@ -3,43 +3,49 @@
 {% block title %}Cargar archivos - {{ app_nombre }}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card p-4 mt-4">
-      <h2 class="mb-3 text-center">Cargar documento</h2>
+<h1 class="mb-4">Cargar e indexar libros</h1>
 
-      {% if mensaje %}
-      <div class="alert alert-success">{{ mensaje }}</div>
-      {% endif %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card card-dark mb-3">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="archivo" class="form-label">
+                            Archivo JSON con la colección de libros
+                        </label>
+                        <input type="file" class="form-control" id="archivo" name="archivo" accept=".json" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            Cargar e indexar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-      {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
+        {% if estado.total_mongo is not none %}
+            <div class="alert alert-success">
+                Se cargaron {{ estado.total_mongo }} libros en MongoDB
+                y se indexaron {{ estado.total_elastic }} en Elasticsearch.
+            </div>
+        {% endif %}
 
-      <form method="post" enctype="multipart/form-data">
-        <div class="mb-3">
-          <label for="titulo" class="form-label">Título</label>
-          <input type="text" class="form-control" id="titulo" name="titulo" required>
-        </div>
-        <div class="mb-3">
-          <label for="autor" class="form-label">Autor</label>
-          <input type="text" class="form-control" id="autor" name="autor">
-        </div>
-        <div class="mb-3">
-          <label for="anio" class="form-label">Año</label>
-          <input type="number" class="form-control" id="anio" name="anio">
-        </div>
-        <div class="mb-3">
-          <label for="descripcion" class="form-label">Descripción</label>
-          <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
-        </div>
-        <div class="mb-3">
-          <label for="archivo" class="form-label">Archivo PDF</label>
-          <input class="form-control" type="file" id="archivo" name="archivo" accept=".pdf" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Cargar e indexar</button>
-      </form>
+        {% if estado.error %}
+            <div class="alert alert-danger">
+                Error: {{ estado.error }}
+            </div>
+        {% endif %}
     </div>
-  </div>
+
+    <div class="col-md-4">
+        <div class="card card-dark">
+            <div class="card-body">
+                <h2 class="h6">Información del índice</h2>
+                <p><strong>Total de documentos indexados:</strong> {{ total_docs_index }}</p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
