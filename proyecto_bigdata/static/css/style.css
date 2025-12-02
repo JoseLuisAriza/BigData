@@ -1,27 +1,26 @@
-/* static/css/style.css */
-
-/* Paleta del usuario */
 :root {
-  --bg-oscuro: #350a06;
-  --bg-navbar: #56070c;
-  --bg-card: #8f3d38;
+  --bg-main: #350a06;
+  --bg-navbar: #350a06;
+  --bg-card: #56070c;
+  --bg-card-soft: #8f3d38;
   --accent: #efb810;
-  --accent-claro: #f9db5c;
-
-  --texto-claro: #ffffff;
-  --texto-suave: #f0e6d8;
+  --accent-light: #f9db5c;
+  --text-main: #ffffff;
+  --text-muted: #f9db5c;
 }
 
-/* Fuente: sistema (similar a la que tenías antes) */
+html, body {
+  height: 100%;
+}
+
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background-color: var(--bg-oscuro);
-  color: var(--texto-claro);
-  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Navbar */
+/* Navbar --------------------------------------------------- */
+
 .navbar {
   background-color: var(--bg-navbar) !important;
 }
@@ -29,132 +28,146 @@ body {
 .navbar-brand,
 .nav-link,
 .navbar-text {
-  color: var(--texto-claro) !important;
+  color: var(--accent-light) !important;
 }
 
-.nav-link.active {
+.navbar-brand {
   font-weight: 600;
 }
 
-/* Botones */
+.nav-link.active,
+.nav-link:hover {
+  color: var(--accent) !important;
+}
+
+/* Contenedores --------------------------------------------- */
+
+.container {
+  max-width: 1100px;
+}
+
+/* Hero section --------------------------------------------- */
+
+.hero-section {
+  position: relative;
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  background-color: var(--bg-main);
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: contain;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(143, 61, 56, 0.7), rgba(53, 10, 6, 0.95));
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+}
+
+.hero-title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--accent-light);
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+/* Cards ---------------------------------------------------- */
+
+.card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
+}
+
+.bg-card {
+  background-color: var(--bg-card);
+}
+
+.bg-card-soft {
+  background-color: var(--bg-card-soft);
+}
+
+/* Botones -------------------------------------------------- */
+
 .btn-primary {
   background-color: var(--accent);
   border-color: var(--accent);
-  color: #1a1300;
+  color: #350a06;
   font-weight: 600;
 }
 
 .btn-primary:hover,
 .btn-primary:focus {
-  background-color: var(--accent-claro);
-  border-color: var(--accent-claro);
-  color: #1a1300;
+  background-color: var(--accent-light);
+  border-color: var(--accent-light);
+  color: #350a06;
 }
 
-/* Portada / index */
-.hero-section {
-  min-height: calc(100vh - 56px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: radial-gradient(circle at top, #56070c 0, #350a06 60%, #1a0503 100%);
-  padding: 3rem 1rem;
-}
+/* Formularios ---------------------------------------------- */
 
-.hero-content {
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-.hero-title {
-  font-size: 2.8rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--accent-claro);
-}
-
-.hero-subtitle {
-  font-size: 1.1rem;
-  color: var(--texto-suave);
-  margin-bottom: 2rem;
-}
-
-/* Para que, si la imagen no carga, NO se vea enorme ni deforme */
-.hero-image {
-  max-width: 320px;
-  height: auto;
-}
-
-/* Cards / paneles */
-.card {
-  background-color: var(--bg-card);
-  border: none;
-  color: var(--texto-claro);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
-}
-
-.card-header {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.card-title {
-  color: var(--accent-claro);
-}
-
-/* Formularios */
 .form-control,
 .form-select {
-  background-color: #1f0b09;
-  border-color: rgba(255, 255, 255, 0.15);
-  color: var(--texto-claro);
+  background-color: #1b1b1b;
+  border-color: #444;
+  color: var(--text-main);
 }
 
 .form-control:focus,
 .form-select:focus {
-  background-color: #25100e;
+  background-color: #1f1f1f;
   border-color: var(--accent);
-  color: var(--texto-claro);
-  box-shadow: 0 0 0 0.25rem rgba(239, 184, 16, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(239, 184, 16, 0.25);
+  color: var(--text-main);
 }
 
-.form-label {
-  color: var(--texto-suave);
-}
+/* Tablas --------------------------------------------------- */
 
-/* Tablas */
 .table {
-  color: var(--texto-claro);
+  color: var(--text-main);
 }
 
-.table thead th {
-  border-bottom-color: rgba(255, 255, 255, 0.25);
+.table-dark {
+  --bs-table-bg: #1b1b1b;
+  --bs-table-striped-bg: #252020;
+  --bs-table-hover-bg: #2f2424;
 }
 
-.table tbody tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.15);
-}
+/* Alerts --------------------------------------------------- */
 
-/* Alertas */
 .alert-danger {
-  background-color: rgba(220, 53, 69, 0.15);
-  border-color: rgba(220, 53, 69, 0.6);
-  color: #ffc9c9;
+  background-color: #8f3d38;
+  border-color: #ff4d4d;
+  color: #ffecec;
 }
 
-/* Margen superior para el contenido bajo la navbar */
-.main-content {
-  padding-top: 1.5rem;
-  padding-bottom: 2rem;
+.alert-success {
+  background-color: #395c1d;
+  border-color: #5fa630;
+  color: #eaffe0;
 }
 
-/* Footer sencillo opcional */
-.footer {
-  color: var(--texto-suave);
-  font-size: 0.85rem;
-  padding: 1rem 0;
-  text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 2rem;
+.alert-warning {
+  background-color: #7a5a09;
+  border-color: #efb810;
+  color: #fff9d6;
+}
+
+/* Utilidades varias ---------------------------------------- */
+
+.text-muted {
+  color: var(--text-muted) !important;
 }
