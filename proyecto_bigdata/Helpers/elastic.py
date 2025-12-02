@@ -1,136 +1,244 @@
+# proyecto_bigdata/Helpers/elastic.py
+import json
 import os
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Tuple, Optional
 
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ConnectionError as ESConnectionError  # noqa: N811
-from elasticsearch.exceptions import NotFoundError
+from dotenv import load_dotenv
+from elasticsearch import Elasticsearch, helpers
 
-ELASTIC_CLOUD_ID = os.getenv("ELASTIC_CLOUD_ID")
-ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
-ELASTIC_HOST = os.getenv("ELASTIC_HOST", "http://localhost:9200")
-ELASTIC_INDEX = os.getenv("ELASTIC_INDEX", "libros")
+load_dotenv()
 
-
-def _get_es_client() -> Elasticsearch:
-    if ELASTIC_CLOUD_ID and ELASTIC_API_KEY:
-        return Elasticsearch(cloud_id=ELASTIC_CLOUD_ID, api_key=ELASTIC_API_KEY)
-    # fallback a host simple
-    return Elasticsearch(ELASTIC_HOST)
+ELASTIC_URL = os.getenv("ELASTIC_URL", "http://localhost:9200")
+ELASTIC_USER = os.getenv("ELASTIC_USER")
+ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD")
+ELASTIC_INDEX = os.getenv("ELASTIC_INDEX", "libros_bigdata")
 
 
-es = _get_es_client()
+def get_client() -> Elasticsearch:
+    """
+    Crea el cliente de Elasticsearch usando las variables de entorno.
+    - ELASTIC_URL (por ejemplo, https://xxxx.es.io:443)
+    - ELASTIC_USER
+    - ELASTIC_PASSWORD
+    """
+    kwargs = {"hosts": [ELASTIC_URL]}
+
+    if ELASTIC_USER and ELASTIC_PASSWORD:
+        kwargs["basic_auth"] = (ELASTIC_USER, ELASTIC_PASSWORD)
+
+    # Para Elastic Cloud suele ser HTTPS, el cliente maneja el certificado.
+    client = Elasticsearch(**kwargs)
+    return client
 
 
 def ping_elastic() -> bool:
     try:
+        es = get_client()
         return bool(es.ping())
-    except ESConnectionError:
+    except Exception:
         return False
 
 
-def _asegurar_indice() -> None:
-    """Crea el índice si no existe (con mapping sencillo)."""
+def contar_documentos(index: Optional[str] = None) -> int:
+    index = index or ELASTIC_INDEX
     try:
-        if not es.indices.exists(index=ELASTIC_INDEX):
-            es.indices.create(
-                index=ELASTIC_INDEX,
-                mappings={
-                    "properties": {
-                        "titulo": {"type": "text"},
-                        "autor": {"type": "text"},
-                        "anio": {"type": "integer"},
-                        "descripcion": {"type": "text"},
-                        "resumen": {"type": "text"},
-                    }
-                },
-            )
-    except ESConnectionError:
-        # Si no se puede conectar, no hacemos nada aquí.
-        pass
-
-
-def indexar_libros(libros: List[Dict[str, Any]]) -> int:
-    """Indexa una lista de libros en Elasticsearch."""
-    if not libros:
-        return 0
-
-    _asegurar_indice()
-
-    total = 0
-    for libro in libros:
-        doc = dict(libro)
-        # usamos el _id de Mongo si viene, pero como string
-        _id = None
-        if "_id" in doc:
-            _id = str(doc["_id"])
-            doc.pop("_id", None)
-
-        es.index(index=ELASTIC_INDEX, id=_id, document=doc)
-        total += 1
-
-    es.indices.refresh(index=ELASTIC_INDEX)
-    return total
-
-
-def contar_documentos() -> int:
-    """Devuelve el número de documentos del índice."""
-    try:
-        if not es.indices.exists(index=ELASTIC_INDEX):
+        es = get_client()
+        if not es.indices.exists(index=index):
             return 0
-        resp = es.count(index=ELASTIC_INDEX)
-        return int(resp.get("count", 0))
-    except (ESConnectionError, NotFoundError):
+        respuesta = es.count(index=index)
+        return int(respuesta.get("count", 0))
+    except Exception:
         return 0
 
 
 def buscar_libros(
     texto: str = "",
     autor: str = "",
-    anio_desde: str | None = None,
-    anio_hasta: str | None = None,
-) -> Tuple[List[Dict[str, Any]], int]:
-    """Busca libros con filtros básicos."""
-    if not es.indices.exists(index=ELASTIC_INDEX):
-        return [], 0
+    anio_desde: str = "",
+    anio_hasta: str = "",
+    index: Optional[str] = None,
+    size: int = 50,
+) -> Tuple[List[Dict], int]:
+    """
+    Realiza la consulta en Elasticsearch.
+    Devuelve (lista_de_resultados, total_resultados).
+    """
+    index = index or ELASTIC_INDEX
+    es = get_client()
 
-    must: List[Dict[str, Any]] = []
+    must = []
+    filtros = []
+
+    texto = (texto or "").strip()
+    autor = (autor or "").strip()
+    anio_desde = (anio_desde or "").strip()
+    anio_hasta = (anio_hasta or "").strip()
 
     if texto:
         must.append(
             {
                 "multi_match": {
                     "query": texto,
-                    "fields": ["titulo^3", "autor^2", "descripcion", "resumen", "*"],
+                    "fields": [
+                        "titulo^3",
+                        "autor^2",
+                        "resumen",
+                        "tags",
+                    ],
                 }
             }
         )
 
     if autor:
-        must.append({"match": {"autor": autor}})
+        must.append(
+            {
+                "match_phrase": {
+                    "autor": autor,
+                }
+            }
+        )
 
     if anio_desde or anio_hasta:
-        rango: Dict[str, Any] = {}
+        rango = {}
         if anio_desde:
-            rango["gte"] = int(anio_desde)
+            try:
+                rango["gte"] = int(anio_desde)
+            except ValueError:
+                pass
         if anio_hasta:
-            rango["lte"] = int(anio_hasta)
-        must.append({"range": {"anio": rango}})
+            try:
+                rango["lte"] = int(anio_hasta)
+            except ValueError:
+                pass
 
-    if must:
-        query = {"bool": {"must": must}}
+        if rango:
+            filtros.append(
+                {
+                    "range": {
+                        "anio": rango
+                    }
+                }
+            )
+
+    if not must:
+        # Si no hay filtros de texto, hacemos un match_all y solo aplicamos rangos.
+        query = {
+            "bool": {
+                "must": [{"match_all": {}}],
+                "filter": filtros,
+            }
+        }
     else:
-        query = {"match_all": {}}
+        query = {
+            "bool": {
+                "must": must,
+                "filter": filtros,
+            }
+        }
 
-    resp = es.search(index=ELASTIC_INDEX, query=query, size=100)
+    cuerpo = {
+        "query": query,
+        "size": size,
+    }
 
-    hits = resp["hits"]["hits"]
-    total_raw = resp["hits"]["total"]
-    total = total_raw["value"] if isinstance(total_raw, dict) else int(total_raw)
+    respuesta = es.search(index=index, body=cuerpo)
+    hits = respuesta["hits"]["hits"]
+    total = respuesta["hits"]["total"]["value"]
 
-    resultados: List[Dict[str, Any]] = []
+    resultados = []
     for h in hits:
-        fuente = h.get("_source", {}) or {}
-        fuente["id"] = h.get("_id")
-        resultados.append(fuente)
+        src = h.get("_source", {})
+        resultados.append(
+            {
+                "titulo": src.get("titulo", ""),
+                "autor": src.get("autor", ""),
+                "anio": src.get("anio"),
+                "categoria": src.get("categoria", ""),
+                "resumen": src.get("resumen", ""),
+                "id": h.get("_id"),
+            }
+        )
 
-    return resultados, total
+    return resultados, int(total)
+
+
+def parsear_json_libros(json_str: str) -> List[Dict]:
+    """
+    Recibe un string JSON con una lista de libros.
+    Valida mínimamente el formato.
+    """
+    datos = json.loads(json_str)
+
+    if isinstance(datos, dict):
+        # Por si viene {"libros": [...]}
+        if "libros" in datos and isinstance(datos["libros"], list):
+            datos = datos["libros"]
+        else:
+            raise ValueError("El JSON debe ser una lista de libros o un dict con clave 'libros'.")
+
+    if not isinstance(datos, list):
+        raise ValueError("El JSON debe ser una lista de libros.")
+
+    libros_limpios = []
+    for i, libro in enumerate(datos, start=1):
+        if not isinstance(libro, dict):
+            raise ValueError(f"El elemento {i} no es un objeto JSON.")
+
+        # Campos básicos esperados
+        titulo = str(libro.get("titulo", "")).strip()
+        autor = str(libro.get("autor", "")).strip()
+
+        if not titulo:
+            raise ValueError(f"El libro {i} no tiene 'titulo'.")
+
+        if not autor:
+            raise ValueError(f"El libro {i} no tiene 'autor'.")
+
+        # Normalizamos año si existe
+        anio = libro.get("anio")
+        if anio is not None:
+            try:
+                anio = int(anio)
+            except (TypeError, ValueError):
+                raise ValueError(f"El libro {i} tiene un 'anio' inválido.")
+
+        libro_limpio = {
+            "titulo": titulo,
+            "autor": autor,
+            "anio": anio,
+            "categoria": str(libro.get("categoria", "")).strip(),
+            "resumen": str(libro.get("resumen", "")).strip(),
+            "tags": libro.get("tags", []),
+        }
+        libros_limpios.append(libro_limpio)
+
+    return libros_limpios
+
+
+def indexar_libros_en_elastic(libros: List[Dict], index: Optional[str] = None) -> int:
+    """
+    Indexa los libros en Elasticsearch mediante bulk.
+    Devuelve cuántos documentos se intentaron indexar.
+    """
+    index = index or ELASTIC_INDEX
+    es = get_client()
+
+    acciones = (
+        {
+            "_index": index,
+            "_source": libro,
+        }
+        for libro in libros
+    )
+
+    helpers.bulk(es, acciones)
+    return len(libros)
+
+
+def indexar_libros_desde_json_str(json_str: str) -> int:
+    """
+    Atajo: recibe un string JSON, lo parsea y lo indexa.
+    Devuelve el número de libros.
+    """
+    libros = parsear_json_libros(json_str)
+    return indexar_libros_en_elastic(libros)
