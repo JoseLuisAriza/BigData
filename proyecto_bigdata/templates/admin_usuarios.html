@@ -1,40 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}Gestión de usuarios - {{ app_nombre }}{% endblock %}
+{% block title %}Gestión de usuarios{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Gestión de usuarios</h1>
+<div class="container py-5">
+  <h1 class="mb-4 text-center">Gestión de usuarios</h1>
 
-<p>
-  En este proyecto se manejan 4 usuarios de ejemplo:
-  2 administradores y 2 usuarios de solo consulta al buscador.
-</p>
+  <p class="mb-4 text-center">
+    En este proyecto se manejan 4 usuarios de ejemplo:
+    2 administradores y 2 usuarios de solo consulta al buscador.
+  </p>
 
-<div class="card card-dark">
-  <div class="card-body">
-    <table class="table table-dark table-striped align-middle mb-0">
-      <thead>
-        <tr>
-          <th>Usuario</th>
-          <th>Nombre</th>
-          <th>Rol</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in usuarios %}
-        <tr>
-          <td>{{ u.username }}</td>
-          <td>{{ u.nombre }}</td>
-          <td>{{ u.rol }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <hr>
-    <p class="small text-muted">
-      
-    </p>
+  <div class="card bg-card text-white">
+    <div class="card-body">
+      <table class="table table-dark table-striped mb-0">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre</th>
+            <th>Rol</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>admin_jose</td>
+            <td>José Luis Ariza</td>
+            <td>admin</td>
+          </tr>
+          <tr>
+            <td>admin_ana</td>
+            <td>Ana Gómez</td>
+            <td>admin</td>
+          </tr>
+          <tr>
+            <td>carlos</td>
+            <td>Carlos Pérez</td>
+            <td>usuario</td>
+          </tr>
+          <tr>
+            <td>luisa</td>
+            <td>Luisa Martínez</td>
+            <td>usuario</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}
