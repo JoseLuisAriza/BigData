@@ -1,26 +1,30 @@
 {% extends "base.html" %}
-{% block content %}
-<h1 class="mb-4">Buscador de libros</h1>
+{% set body_class = "landing-bg" %}
 
-<form method="post" action="{{ url_for('buscar') }}" class="row g-3">
-    <div class="col-md-6">
-        <label class="form-label">Texto libre (título, contenido, autor)</label>
-        <input type="text" class="form-control" name="texto" placeholder="Ej: cosmos, relatividad, amor">
+{% block title %}Mini Biblioteca BigData{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="text-center text-light bg-dark bg-opacity-50 p-5 rounded-4 shadow-lg">
+        <h1 class="display-4 fw-bold mb-3">
+            Mini Biblioteca 
+        </h1>
+
+        <p class="lead mb-1">
+            Proyecto final de Big Data: buscador de una biblioteca digital
+            usando Elasticsearch y MongoDB.
+        </p>
+
+        <p class="mb-4">
+            Autor: Jose Luis Ariza · Versión 1.0
+            2025.
+        </p>
+
+        <a href="{{ url_for('buscar') }}" class="btn btn-primary btn-lg">
+            Ir al buscador
+        </a>
     </div>
-    <div class="col-md-6">
-        <label class="form-label">Autor</label>
-        <input type="text" class="form-control" name="autor" placeholder="Ej: Carl Sagan">
-    </div>
-    <div class="col-md-3">
-        <label class="form-label">Año desde</label>
-        <input type="number" class="form-control" name="anio_desde">
-    </div>
-    <div class="col-md-3">
-        <label class="form-label">Año hasta</label>
-        <input type="number" class="form-control" name="anio_hasta">
-    </div>
-    <div class="col-12">
-        <button type="submit" class="btn btn-primary mt-2">Buscar</button>
-    </div>
-</form>
+</div>
+
 {% endblock %}
