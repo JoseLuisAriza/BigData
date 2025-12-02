@@ -42,7 +42,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.secret_key = os.environ.get("SECRET_KEY", "cambia-esta-clave-super-secreta")
+app.secret_key = os.environ.get("SECRET_KEY", "BigData_Ucentral_2025")
 
 # -------------------------------------------------------------------------
 # Clientes de MongoDB y ElasticSearch
