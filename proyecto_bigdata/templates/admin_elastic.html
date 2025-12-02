@@ -6,21 +6,22 @@
 <h1 class="mb-4">Administrar Elastic</h1>
 
 <div class="card card-dark">
-    <div class="card-body">
-        <p><strong>Índice actual:</strong> {{ estado.index if estado.index is defined else (env('ELASTIC_INDEX') if false else '') }}</p>
-        <p><strong>Total de documentos indexados:</strong> {{ estado.total_docs }}</p>
+  <div class="card-body">
+    <p><strong>Índice actual:</strong> {{ indice_actual }}</p>
+    <p><strong>Total de documentos indexados:</strong> {{ total_indexados }}</p>
 
-        {% if estado.elastic_ok %}
-            <p>
-                Esta página demuestra la conexión con Elasticsearch
-                y sirve como panel básico de estado.
-            </p>
-        {% else %}
-            <p class="text-danger">
-                No se pudo conectar con Elasticsearch.
-                {% if estado.error %}<br>{{ estado.error }}{% endif %}
-            </p>
-        {% endif %}
-    </div>
+    {% if estado_ping %}
+      <p class="text-success">Conexión con Elasticsearch correcta.</p>
+    {% else %}
+      <p class="text-danger">No se pudo hacer ping al servidor de Elasticsearch.</p>
+      {% if error %}
+        <p class="text-danger small">{{ error }}</p>
+      {% endif %}
+      <p class="small">
+        Revisa en Render las variables de entorno <code>ELASTIC_URL</code>,
+        <code>ELASTIC_USER</code> y <code>ELASTIC_PASSWORD</code>.
+      </p>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
