@@ -1,17 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Mini Biblioteca{% endblock %}
+{% block title %}Mini Biblioteca BigData{% endblock %}
+{% block body_class %}landing-bg{% endblock %}
 
-{% block content %}
-<div class="text-center py-5">
-  <h1 class="display-5 mb-3">Mini Biblioteca</h1>
-  <p class="lead mb-4">
-    Proyecto final de Big Data: buscador de una biblioteca digital usando
-    Elasticsearch y MongoDB.
-  </p>
-  <p>Autor: Jose Luis Ariza &middot; Versión 1.0</p>
-  <a href="{{ url_for('buscar') }}" class="btn btn-primary btn-lg mt-4">
-    Ir al buscador
-  </a>
+{% block main %}
+<div class="landing-overlay">
+  <div class="container text-center">
+    <h1 class="display-4 mb-3">Mini Biblioteca BigData</h1>
+    <p class="lead mb-4">
+      Proyecto final de Big Data: buscador de una biblioteca digital usando Elasticsearch y MongoDB.
+    </p>
+    <p class="mb-4">
+      Autor: Jose Luis Ariza · Versión 1.0
+    </p>
+    <a href="{{ url_for('buscar') }}" class="btn btn-primary btn-lg">
+      Ir al buscador
+    </a>
+  </div>
 </div>
 {% endblock %}
