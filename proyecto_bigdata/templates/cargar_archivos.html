@@ -1,49 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Cargar e indexar libros - {{ app_nombre }}{% endblock %}
+{% block title %}Cargar e indexar libros{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Cargar e indexar libros</h1>
+<div class="container py-5">
+  <h1 class="mb-4 text-center">Cargar e indexar libros</h1>
 
-<div class="row g-4">
-  <div class="col-lg-8">
-    <div class="card card-dark h-100">
-      <div class="card-body">
-        <h3 class="card-title">Archivo JSON con la colección de libros</h3>
-        <form method="post" enctype="multipart/form-data">
-          <div class="mb-3">
-            <input type="file" name="archivo" class="form-control" accept=".json" required>
-          </div>
-          <div class="d-grid">
+  {% if mensaje_error %}
+    <div class="alert alert-danger" role="alert">
+      {{ mensaje_error }}
+    </div>
+  {% endif %}
+
+  {% if mensaje_exito %}
+    <div class="alert alert-success" role="alert">
+      {{ mensaje_exito }}
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card bg-card text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Archivo JSON con la colección de libros</h5>
+          <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="archivo" class="form-label">Selecciona un archivo JSON</label>
+              <input type="file" class="form-control" id="archivo" name="archivo" accept=".json" required>
+            </div>
             <button type="submit" class="btn btn-primary">Cargar e indexar</button>
-          </div>
-        </form>
-
-        <hr>
-
-        {% if total_indexados_es is not none %}
-          <p>Libros cargados en Elasticsearch en esta operación: <strong>{{ total_indexados_es }}</strong></p>
-        {% endif %}
-        {% if total_insertados_mongo is not none %}
-          <p>Libros guardados en MongoDB en esta operación: <strong>{{ total_insertados_mongo }}</strong></p>
-        {% endif %}
-
-        {% if error %}
-          <p class="text-danger small">{{ error }}</p>
-        {% endif %}
+          </form>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="col-lg-4">
-    <div class="card card-dark h-100">
-      <div class="card-body">
-        <h3 class="card-title">Información del índice</h3>
-        <p>Libros indexados ahora en Elasticsearch: <strong>{{ total_es_actual }}</strong></p>
-        <p>Libros totales en MongoDB: <strong>{{ estadisticas_mongo.total_libros_mongo }}</strong></p>
-        <p class="small text-muted">
-          
-        </p>
+    <div class="col-lg-5">
+      <div class="card bg-card-soft text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Información del índice</h5>
+          <p class="mb-1"><strong>Libros indexados ahora en Elasticsearch:</strong> {{ total_en_elastic }}</p>
+          <p class="mb-0"><strong>Libros totales en MongoDB:</strong> {{ total_en_mongo }}</p>
+        </div>
       </div>
     </div>
   </div>
