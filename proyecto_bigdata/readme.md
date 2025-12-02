@@ -49,7 +49,7 @@ La aplicación cumple los requisitos del proyecto de Big Data:
 - MongoDB Atlas
 - Bootstrap 5
 - Render.com (despliegue)
-- HTML, CSS y Jinja2
+- HTML y CSS
 
 ---
 
