@@ -1,39 +1,56 @@
+# proyecto_bigdata/Helpers/mongoDB.py
 import os
-from typing import List, Dict, Any
+from typing import List, Dict
 
+from dotenv import load_dotenv
 from pymongo import MongoClient
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-MONGO_DB = os.getenv("MONGO_DB", "bigdata")
-MONGO_COLLECTION = os.getenv("MONGO_COLLECTION", "libros")
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI", "")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "biblioteca_bigdata")
+MONGO_COLLECTION_LIBROS = os.getenv("MONGO_COLLECTION_LIBROS", "libros")
 
 _client = None
 
 
-def _get_client() -> MongoClient:
+def get_client() -> MongoClient:
     global _client
     if _client is None:
+        if not MONGO_URI:
+            raise RuntimeError("MONGO_URI no está configurada.")
         _client = MongoClient(MONGO_URI)
     return _client
 
 
-def _get_collection():
-    client = _get_client()
-    db = client[MONGO_DB]
-    return db[MONGO_COLLECTION]
-
-
-def insertar_libros(libros: List[Dict[str, Any]]) -> int:
-    """Inserta una lista de libros en la colección."""
+def guardar_libros_mongo(libros: List[Dict]) -> int:
+    """
+    Guarda la lista de libros en MongoDB.
+    Devuelve cuántos documentos se insertaron.
+    """
     if not libros:
         return 0
 
-    col = _get_collection()
-    result = col.insert_many(libros)
-    return len(result.inserted_ids)
+    db = get_client()[MONGO_DB_NAME]
+    col = db[MONGO_COLLECTION_LIBROS]
+    resultado = col.insert_many(libros)
+    return len(resultado.inserted_ids)
 
 
-def obtener_todos_los_libros() -> List[Dict[str, Any]]:
-    """Devuelve todos los libros almacenados en MongoDB."""
-    col = _get_collection()
-    return list(col.find({}))
+def contar_libros_mongo() -> int:
+    try:
+        db = get_client()[MONGO_DB_NAME]
+        return db[MONGO_COLLECTION_LIBROS].count_documents({})
+    except Exception:
+        return 0
+
+
+def obtener_estadisticas_libros() -> Dict:
+    """
+    Por ahora solo devuelve el total de libros en Mongo.
+    Se puede extender fácil si tu profe pide más métricas.
+    """
+    total = contar_libros_mongo()
+    return {
+        "total_libros_mongo": total,
+    }
