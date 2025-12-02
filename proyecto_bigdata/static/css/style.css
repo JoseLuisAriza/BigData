@@ -1,43 +1,62 @@
-/* Estructura general */
-
-html, body {
-    height: 100%;
-}
-
+/* Fondo base oscuro */
 body {
-    background-color: #121212;
-    color: #f8f9fa;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+  background-color: #05070a;
+  color: #ffffff;
 }
 
-main {
-    flex: 1 0 auto;
+/* Ajuste general del contenedor */
+main.container {
+  min-height: 70vh;
 }
 
-.footer {
-    flex-shrink: 0;
+/* NAVBAR */
+.navbar-brand {
+  font-weight: 600;
 }
 
-/* Landing con fondo */
+/* ===== Fondo del landing ===== */
 
-body.landing-bg {
-    background:
-        linear-gradient(
-            rgba(0, 0, 0, 0.65),
-            rgba(0, 0, 0, 0.85)
-        ),
-        url("../img/biblioteca_robot.jpg") no-repeat center center fixed;
-    background-size: cover;
+.landing-bg {
+  background-image: url("/static/img/biblioteca_robot.jpg");
+  /* si tu imagen es PNG, usa biblioteca_robot.png, etc. */
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-.landing-overlay {
-    padding-top: 15vh;
+/* Hero del landing */
+.landing-hero {
+  padding: 8rem 1rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
-/* Extra: tarjetas oscuras, etc. */
+/* Formularios en modo oscuro */
+.form-control {
+  background-color: #111827;
+  border-color: #374151;
+  color: #e5e7eb;
+}
 
-.list-group-item {
-    border-radius: 0.5rem;
+.form-control:focus {
+  background-color: #111827;
+  border-color: #3b82f6;
+  color: #e5e7eb;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.table-dark {
+  --bs-table-bg: #111827;
+  --bs-table-striped-bg: #1f2937;
+}
+
+/* Botón principal */
+.btn-primary {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
 }
