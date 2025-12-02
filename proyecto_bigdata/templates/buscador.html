@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados de búsqueda · {{ app_nombre }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 mt-4 mb-4">Resultados de búsqueda</h1>
+
+<form method="get" action="{{ url_for('buscar') }}" class="mb-4">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label for="texto" class="form-label">Texto libre</label>
+      <input type="text" class="form-control" id="texto" name="texto" value="{{ texto }}">
+    </div>
+
+    <div class="col-md-3">
+      <label for="autor" class="form-label">Autor</label>
+      <input type="text" class="form-control" id="autor" name="autor" value="{{ autor }}">
+    </div>
+
+    <div class="col-md-2">
+      <label for="anio_desde" class="form-label">Año desde</label>
+      <input type="number" class="form-control" id="anio_desde" name="anio_desde" value="{{ anio_desde }}">
+    </div>
+
+    <div class="col-md-2">
+      <label for="anio_hasta" class="form-label">Año hasta</label>
+      <input type="number" class="form-control" id="anio_hasta" name="anio_hasta" value="{{ anio_hasta }}">
+    </div>
+
+    <div class="col-md-1 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary w-100">Buscar</button>
+    </div>
+  </div>
+</form>
+
+<p class="mb-3">
+  Total de resultados:
+  <strong>{{ total_resultados }}</strong>
+</p>
+
+{% if resultados %}
+  <div class="mt-3">
+    {% for r in resultados %}
+      <div class="result-item">
+        <h2 class="h5 mb-1">{{ r.titulo }}</h2>
+        <p class="mb-1">
+          <strong>Autor:</strong> {{ r.autor }}{% if r.anio %} · <strong>Año:</strong> {{ r.anio }}{% endif %}
+        </p>
+        <p class="mb-1">
+          <small>Score: {{ "%.3f"|format(r.score) }}</small>
+        </p>
+        <p class="mb-2">
+          {{ r.resumen }}
+        </p>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No se encontraron libros con esos filtros.</p>
+{% endif %}
+
+{% endblock %}
