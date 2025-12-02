@@ -1,16 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Usuarios - {{ app_nombre }}{% endblock %}
+{% block title %}Gestión de usuarios - {{ app_nombre }}{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Gestión de usuarios (demo)</h1>
+<h1 class="mb-4">Gestión de usuarios</h1>
 
 <p>
-    Esta sección se deja como referencia para el panel de administración.
-    En este proyecto solo se maneja un usuario administrador definido en variables de entorno.
+  En este proyecto se manejan 4 usuarios de ejemplo:
+  2 administradores y 2 usuarios de solo consulta al buscador.
 </p>
 
-<ul>
-    <li><strong>Usuario administrador:</strong> valor de <code>ADMIN_USER</code> (por defecto: <code>admin</code>).</li>
-</ul>
+<div class="card card-dark">
+  <div class="card-body">
+    <table class="table table-dark table-striped align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombre</th>
+          <th>Rol</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td>{{ u.nombre }}</td>
+          <td>{{ u.rol }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <hr>
+    <p class="small text-muted">
+      Las contraseñas están definidas en el archivo
+      <code>Helpers/funciones.py</code> dentro de la lista <code>USUARIOS_DEMO</code>.
+    </p>
+  </div>
+</div>
 {% endblock %}
