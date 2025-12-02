@@ -1,14 +1,18 @@
 {% extends "base.html" %}
 {% set body_class = "landing-bg" %}
+{% block title %}Inicio{% endblock %}
 
 {% block content %}
-<div class="landing-overlay text-center text-light">
-    <h1 class="display-4 fw-bold mb-3">Mini Biblioteca BigData</h1>
-    <p class="lead mb-4">
-        Buscador de una biblioteca digital usando Elasticsearch y MongoDB.
-    </p>
-    <a href="{{ url_for('buscar') }}" class="btn btn-primary btn-lg">
-        Ir al buscador
-    </a>
+<div class="text-center text-light landing-hero">
+  <h1 class="display-4 fw-bold mb-3">Mini Biblioteca</h1>
+  <p class="lead mb-4">
+    Proyecto final de Big Data: buscador de una biblioteca digital usando Elasticsearch y MongoDB.
+  </p>
+  <p class="mb-4">
+    Autor: Jose Luis Ariza · Versión 1.0
+  </p>
+  <a href="{{ url_for('buscar') }}" class="btn btn-primary btn-lg">
+    Ir al buscador
+  </a>
 </div>
 {% endblock %}
