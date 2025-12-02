@@ -1,194 +1,184 @@
+import json
 import os
-from typing import Any, Dict, List, Tuple, Optional
-
+from typing import Tuple, List, Any
 from elasticsearch import Elasticsearch, helpers
 
 
 # ============================================================
-# Configuración de conexión
+# FUNCIÓN: Crear cliente Elasticsearch desde variables de entorno
 # ============================================================
 
-# Nombres de variables de entorno que estás usando en Render
-ES_CLOUD_URL = os.getenv("ES_CLOUD_URL") or os.getenv("ELASTIC_URL") or "http://localhost:9200"
-ES_API_KEY = os.getenv("ES_API_KEY")
-
-# Opcionalmente, si algún día quieres volver a user/password:
-ELASTIC_USER = os.getenv("ELASTIC_USER")
-ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD")
-
-INDICE_LIBROS = "libros_bigdata"
-
-
-def _crear_cliente() -> Optional[Elasticsearch]:
+def _crear_cliente() -> Elasticsearch | None:
     """
-    Crea el cliente de Elasticsearch según lo que haya en variables de entorno.
-    - En Render: usa ES_CLOUD_URL + ES_API_KEY (Elastic Cloud).
-    - En local: si no hay nada, intenta http://localhost:9200 sin auth.
+    Crea una instancia de cliente de Elasticsearch usando las variables
+    de entorno ES_CLOUD_URL y ES_API_KEY.
     """
+    es_cloud_url = os.getenv("ES_CLOUD_URL")
+    es_api_key = os.getenv("ES_API_KEY")
+
+    if not es_cloud_url or not es_api_key:
+        print("[ERROR] Faltan variables de entorno ES_CLOUD_URL o ES_API_KEY")
+        return None
+
     try:
-        if ES_API_KEY:
-            # Elastic Cloud con API key
-            client = Elasticsearch(ES_CLOUD_URL, api_key=ES_API_KEY)
-        elif ELASTIC_USER and ELASTIC_PASSWORD:
-            # Opción user/password
-            client = Elasticsearch(
-                ES_CLOUD_URL,
-                basic_auth=(ELASTIC_USER, ELASTIC_PASSWORD),
-            )
-        else:
-            # Fallback: sin auth (por ejemplo localhost:9200 en tu PC)
-            client = Elasticsearch(ES_CLOUD_URL)
-
+        client = Elasticsearch(
+            es_cloud_url,
+            api_key=es_api_key,
+            request_timeout=30
+        )
         return client
     except Exception as e:
-        print(f"[Elastic] Error creando cliente: {e}")
+        print(f"[ERROR] No se pudo crear el cliente de Elasticsearch: {e}")
         return None
 
 
 # ============================================================
-# Funciones de administración / estado
+# FUNCIÓN: Probar conexión
 # ============================================================
 
 def ping_elasticsearch() -> Tuple[bool, str]:
     """
-    Verifica si Elasticsearch responde al ping.
-    Devuelve (ok, mensaje_error).
+    Verifica si Elasticsearch está accesible con las credenciales actuales.
     """
     client = _crear_cliente()
-    if client is None:
-        return False, "No se pudo crear el cliente de Elasticsearch (revisa ES_CLOUD_URL / ES_API_KEY)."
+    if not client:
+        return False, "No se pudo crear el cliente."
 
     try:
-        ok = client.ping()
-        if not ok:
-            return False, "El servidor de Elasticsearch no respondió al ping."
-        return True, ""
+        if client.ping():
+            return True, "Conexión exitosa con Elasticsearch."
+        else:
+            return False, "No se pudo hacer ping al cluster."
     except Exception as e:
-        return False, str(e)
-
-
-def contar_documentos() -> Tuple[int, str]:
-    """
-    Cuenta documentos en el índice de libros.
-    Devuelve (cantidad, mensaje_error).
-    """
-    client = _crear_cliente()
-    if client is None:
-        return 0, "No se pudo crear el cliente de Elasticsearch (revisa ES_CLOUD_URL / ES_API_KEY)."
-
-    try:
-        if not client.indices.exists(index=INDICE_LIBROS):
-            return 0, ""
-        resp = client.count(index=INDICE_LIBROS)
-        return resp.get("count", 0), ""
-    except Exception as e:
-        return 0, str(e)
+        return False, f"Error al conectar con Elasticsearch: {e}"
 
 
 # ============================================================
-# Búsqueda de libros
+# FUNCIÓN: Contar documentos en un índice
 # ============================================================
 
-def buscar_libros(
-    texto: str = "",
-    autor: str = "",
-    anio_desde: str = "",
-    anio_hasta: str = "",
-    size: int = 50,
-) -> Tuple[List[Dict[str, Any]], str]:
+def contar_documentos(client: Elasticsearch, indice: str) -> int:
     """
-    Realiza una búsqueda en Elasticsearch con filtros por texto, autor y rango de años.
-    Devuelve (lista_resultados, mensaje_error).
+    Retorna el número de documentos en un índice específico.
     """
-    client = _crear_cliente()
-    if client is None:
-        return [], "No se pudo crear el cliente de Elasticsearch (revisa ES_CLOUD_URL / ES_API_KEY)."
+    try:
+        if not client.indices.exists(index=indice):
+            return 0
+        resp = client.count(index=indice)
+        return resp.get("count", 0)
+    except Exception as e:
+        print(f"[ERROR] No se pudo contar documentos en '{indice}': {e}")
+        return 0
 
-    must_clauses: List[Dict[str, Any]] = []
 
-    if texto:
-        must_clauses.append({
-            "multi_match": {
-                "query": texto,
-                "fields": ["titulo^3", "autor^2", "descripcion", "temas"],
-            }
-        })
+# ============================================================
+# FUNCIÓN: Buscar libros
+# ============================================================
 
-    if autor:
-        must_clauses.append({
-            "match": {
-                "autor": autor
-            }
-        })
+def buscar_libros(client: Elasticsearch, query: str, indice: str = "libros") -> List[dict]:
+    """
+    Realiza una búsqueda por texto en el índice especificado.
+    """
+    try:
+        response = client.search(
+            index=indice,
+            query={"multi_match": {"query": query, "fields": ["titulo", "autor", "descripcion"]}},
+            size=20
+        )
+        hits = response["hits"]["hits"]
+        return [hit["_source"] for hit in hits]
+    except Exception as e:
+        print(f"[ERROR] No se pudo buscar libros: {e}")
+        return []
 
-    if anio_desde or anio_hasta:
-        rango: Dict[str, Any] = {}
-        if anio_desde:
-            rango["gte"] = int(anio_desde)
-        if anio_hasta:
-            rango["lte"] = int(anio_hasta)
 
-        must_clauses.append({
-            "range": {
-                "anio": rango
-            }
-        })
+# ============================================================
+# FUNCIÓN: Parsear archivo JSON o NDJSON con libros
+# ============================================================
 
-    if not must_clauses:
-        # Si no hay filtros, que traiga algo razonable
-        query: Dict[str, Any] = {"match_all": {}}
-    else:
-        query = {"bool": {"must": must_clauses}}
+def parsear_json_libros(contenido: str) -> List[dict]:
+    """
+    Convierte el texto del archivo cargado en una lista de diccionarios.
+    Acepta JSON (lista) o NDJSON (líneas separadas).
+    """
+    try:
+        contenido = contenido.strip()
+        if contenido.startswith("["):
+            return json.loads(contenido)
+        else:
+            return [json.loads(linea) for linea in contenido.splitlines() if linea.strip()]
+    except Exception as e:
+        print(f"[ERROR] No se pudo parsear el JSON: {e}")
+        return []
 
-    body = {"query": query}
+
+# ============================================================
+# FUNCIÓN: Indexar libros en Elasticsearch
+# ============================================================
+
+def indexar_libros_en_elastic(client: Elasticsearch, libros: List[dict]) -> Tuple[int, List[str]]:
+    """
+    Indexa múltiples documentos en Elasticsearch usando la API bulk.
+    Devuelve (número_indexados, lista_errores).
+    """
+    errores = []
+    total_indexados = 0
+
+    if not libros:
+        return 0, ["No hay libros para indexar."]
+
+    acciones = [
+        {"_index": "libros", "_source": libro}
+        for libro in libros
+    ]
 
     try:
-        resp = client.search(index=INDICE_LIBROS, body=body, size=size)
-        resultados: List[Dict[str, Any]] = []
-        for hit in resp.get("hits", {}).get("hits", []):
-            doc = hit.get("_source", {})
-            doc["id"] = hit.get("_id")
-            resultados.append(doc)
-
-        return resultados, ""
+        resp = helpers.bulk(client, acciones, raise_on_error=False)
+        total_indexados = resp[0]
     except Exception as e:
-        return [], str(e)
+        errores.append(str(e))
+
+    return total_indexados, errores
 
 
 # ============================================================
-# Indexación de libros
+# 🔧 ALIASES DE COMPATIBILIDAD PARA app.py
 # ============================================================
 
-def indexar_libros_en_elastic(libros: List[Dict[str, Any]]) -> Tuple[int, str]:
+def ping_elastic() -> Tuple[bool, str]:
     """
-    Recibe una lista de diccionarios de libros (venidos de MongoDB) y los indexa en Elasticsearch.
-    Cada libro debería tener al menos: titulo, autor, anio, descripcion, temas.
-    Devuelve (cantidad_indexada, mensaje_error).
+    Alias de compatibilidad para app.py.
+    Internamente llama a ping_elasticsearch().
+    """
+    return ping_elasticsearch()
+
+
+def indexar_libros_desde_json_str(contenido_json: str) -> int:
+    """
+    Recibe el contenido del archivo subido (JSON/NDJSON),
+    lo parsea e indexa los documentos en Elasticsearch.
+    Devuelve el número total de documentos indexados.
     """
     client = _crear_cliente()
-    if client is None:
-        return 0, "No se pudo crear el cliente de Elasticsearch (revisa ES_CLOUD_URL / ES_API_KEY)."
+    if not client:
+        raise RuntimeError("No se pudo crear el cliente de Elasticsearch.")
 
-    acciones = []
-    for libro in libros:
-        acciones.append({
-            "_index": INDICE_LIBROS,
-            "_id": str(libro.get("_id", "")),
-            "_source": {
-                "titulo": libro.get("titulo"),
-                "autor": libro.get("autor"),
-                "anio": libro.get("anio"),
-                "descripcion": libro.get("descripcion"),
-                "temas": libro.get("temas"),
-            },
-        })
+    libros = parsear_json_libros(contenido_json)
+    total_indexados, errores = indexar_libros_en_elastic(client, libros)
 
-    if not acciones:
-        return 0, ""
+    if errores:
+        print(f"[indexar_libros_desde_json_str] {len(errores)} errores detectados:")
+        for e in errores[:5]:
+            print(" -", e)
 
-    try:
-        helpers.bulk(client, acciones)
-        client.indices.refresh(index=INDICE_LIBROS)
-        return len(acciones), ""
-    except Exception as e:
-        return 0, str(e)
+    return total_indexados
+
+
+# ============================================================
+# BLOQUE DE PRUEBA LOCAL
+# ============================================================
+
+if __name__ == "__main__":
+    print("Ping a Elasticsearch (usando get_es_client()):")
+    ok, error = ping_elasticsearch()
+    print("Resultado:", ok, "| Mensaje:", error)
