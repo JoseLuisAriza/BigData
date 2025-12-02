@@ -10,8 +10,20 @@ body {
     color: #f8f9fa;
 }
 
-/* Fondo solo para la landing */
-body.landing-bg {
-    background: url("../img/biblioteca_robot.jpg") no-repeat center center fixed;
+/* Fondo para la landing */
+.landing-bg {
+    background-image: url("../img/biblioteca_robot.jpg"); 
     background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* Capa oscura para que el texto se lea mejor */
+.landing-bg::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: -1;
 }
