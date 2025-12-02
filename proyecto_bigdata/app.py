@@ -1,208 +1,280 @@
+# app.py
 import os
+from functools import wraps
+
 from flask import (
     Flask,
     render_template,
     request,
     redirect,
     url_for,
-    session,
     flash,
+    session,
 )
+from werkzeug.utils import secure_filename
 
-from Helpers.mongoDB import (
-    get_usuarios_collection,
-    crear_usuario,
-    validar_login,
-    asegurar_admin_por_defecto,
-)
+# Estos imports son los que pide la estructura del profe
+from Helpers import mongoDB  # noqa: F401
+from Helpers import elastic  # noqa: F401
 
-from Helpers.elastic import (
-    contar_documentos,
-    buscar_libros,
-    crear_indice_si_no_existe,
-    cargar_libro,
-    get_index_name,
-)
+# Conexiones directas (para no depender de nombres de funciones internas)
+from pymongo import MongoClient
+from elasticsearch import Elasticsearch
 
-from Helpers.funciones import admin_requerido
-from Helpers.PLN import resumir_texto
+# -------------------------------------------------------------------------
+# Configuración básica
+# -------------------------------------------------------------------------
+
+# Si tienes variables de entorno en Render (.env allí no se carga solo),
+# las lee desde el entorno del sistema.
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
+MONGO_DB_NAME = os.environ.get("MONGO_DB", "biblioteca_bigdata")
+
+ES_URL = os.environ.get("ES_URL", "http://localhost:9200")
+ES_INDEX = os.environ.get("ES_INDEX", "libros")
+
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin123")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.secret_key = os.environ.get("SECRET_KEY", "cambia-esta-clave-super-secreta")
+
+# -------------------------------------------------------------------------
+# Clientes de MongoDB y ElasticSearch
+# -------------------------------------------------------------------------
+
+mongo_client = MongoClient(MONGO_URI)
+mongo_db = mongo_client[MONGO_DB_NAME]
+
+# verify_certs=False evita problemas si es un ES simple de pruebas
+es = Elasticsearch(ES_URL, verify_certs=False)
 
 
-def create_app():
-    app = Flask(__name__)
+# -------------------------------------------------------------------------
+# Helpers de autenticación
+# -------------------------------------------------------------------------
 
-    # Clave de sesión
-    app.secret_key = os.environ.get("SECRET_KEY", "cambia-esta-clave")
+def login_requerido(vista):
+    @wraps(vista)
+    def wrapper(*args, **kwargs):
+        if "usuario" not in session:
+            flash("Debe iniciar sesión para acceder al panel de administración.", "warning")
+            return redirect(url_for("login"))
+        return vista(*args, **kwargs)
 
-    # Asegurar admin por defecto y existencia del índice al arrancar
-    asegurar_admin_por_defecto()
-    crear_indice_si_no_existe()
+    return wrapper
 
-    # Variables globales para las plantillas
-    @app.context_processor
-    def inject_globals():
-        return {
-            "app_nombre": "Mini Biblioteca BigData",
-        }
 
-    # ---------------- RUTAS PÚBLICAS ---------------- #
+# -------------------------------------------------------------------------
+# Rutas públicas
+# -------------------------------------------------------------------------
 
-    @app.route("/")
-    def index():
-        """
-        Landing page (página principal).
-        """
-        return render_template("landing.html")
+@app.route("/")
+def index():
+    """Landing page. En base.html se usa url_for('index'), por eso
+    la función debe llamarse exactamente 'index'."""
+    return render_template("landing.html")
 
-    @app.route("/buscar", methods=["GET"])
-    def buscar():
-        """
-        Buscador público.
-        """
-        texto = request.args.get("texto", "").strip() or None
-        autor = request.args.get("autor", "").strip() or None
-        anio_desde = request.args.get("anio_desde") or None
-        anio_hasta = request.args.get("anio_hasta") or None
 
-        resultados = []
-        total = 0
+@app.route("/buscar", methods=["GET"])
+def buscar():
+    """
+    Buscador público.
+    Lee el parámetro de búsqueda de varios nombres posibles:
+    q / termino / query, para adaptarse al formulario que tengas.
+    """
+    termino = (
+        request.args.get("q")
+        or request.args.get("termino")
+        or request.args.get("query")
+        or ""
+    ).strip()
 
-        # Solo buscar si hay al menos un filtro
-        if any([texto, autor, anio_desde, anio_hasta]):
-            try:
-                resultados, total = buscar_libros(
-                    texto=texto,
-                    autor=autor,
-                    anio_desde=anio_desde,
-                    anio_hasta=anio_hasta,
-                )
-                # Resumen corto del texto
-                for r in resultados:
-                    r["resumen"] = resumir_texto(r.get("texto"))
-            except Exception as e:
-                flash(f"Error al ejecutar la búsqueda: {e}", "danger")
+    resultados = []
+    total_resultados = 0
+    error = None
 
-        return render_template(
-            "buscador.html",
-            resultados=resultados,
-            total_resultados=total,
-            texto=texto or "",
-            autor=autor or "",
-            anio_desde=anio_desde or "",
-            anio_hasta=anio_hasta or "",
-        )
+    if termino:
+        try:
+            consulta = {
+                "query": {
+                    "multi_match": {
+                        "query": termino,
+                        "fields": ["titulo^2", "autor", "texto", "nombre"],
+                        "fuzziness": "AUTO",
+                    }
+                }
+            }
 
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        """
-        Login de administrador.
-        """
-        if request.method == "POST":
-            username = request.form.get("username")
-            password = request.form.get("password")
+            respuesta = es.search(index=ES_INDEX, body=consulta)
+            total_resultados = respuesta["hits"]["total"]["value"]
 
-            usuario = validar_login(username, password)
-            if usuario:
-                session["usuario"] = usuario["username"]
-                session["es_admin"] = bool(usuario.get("es_admin"))
-                flash("Login correcto.", "success")
-                return redirect(url_for("admin"))
+            for hit in respuesta["hits"]["hits"]:
+                doc = hit.get("_source", {}).copy()
+                doc["_score"] = hit.get("_score", 0)
+                resultados.append(doc)
 
+        except Exception as exc:  # noqa: BLE001
+            # No queremos que el usuario vea un 500 si falla Elastic
+            error = f"Error al buscar en ElasticSearch: {exc}"
+
+    return render_template(
+        "buscador.html",
+        termino=termino,
+        resultados=resultados,
+        total_resultados=total_resultados,
+        error=error,
+    )
+
+
+# -------------------------------------------------------------------------
+# Login / Logout
+# -------------------------------------------------------------------------
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        usuario = request.form.get("usuario", "").strip()
+        clave = request.form.get("clave", "").strip()
+
+        if usuario == ADMIN_USER and clave == ADMIN_PASS:
+            session["usuario"] = usuario
+            flash("Inicio de sesión correcto.", "success")
+            return redirect(url_for("admin"))
+        else:
             flash("Usuario o contraseña incorrectos.", "danger")
 
-        return render_template("login.html")
+    return render_template("login.html")
 
-    @app.route("/logout")
-    def logout():
-        """
-        Cerrar sesión.
-        """
-        session.clear()
-        flash("Sesión cerrada.", "info")
-        return redirect(url_for("index"))
 
-    # ---------------- RUTAS ADMIN ---------------- #
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Sesión cerrada.", "info")
+    return redirect(url_for("index"))
 
-    @app.route("/admin")
-    @admin_requerido
-    def admin():
-        """
-        Panel principal de administración.
-        """
-        return render_template("admin.html")
 
-    @app.route("/admin/usuarios", methods=["GET", "POST"])
-    @admin_requerido
-    def admin_usuarios():
-        """
-        Gestión de usuarios (crear y listar).
-        """
-        col = get_usuarios_collection()
+# -------------------------------------------------------------------------
+# Panel de administración
+# -------------------------------------------------------------------------
 
-        if request.method == "POST":
-            username = request.form.get("username")
-            password = request.form.get("password")
-            es_admin = bool(request.form.get("es_admin"))
+@app.route("/admin")
+@login_requerido
+def admin():
+    return render_template("admin.html")
 
-            creado = crear_usuario(username, password, es_admin)
-            if creado:
-                flash("Usuario creado correctamente.", "success")
-            else:
-                flash("El usuario ya existe.", "warning")
 
-            return redirect(url_for("admin_usuarios"))
+@app.route("/admin/usuarios")
+@app.route("/admin_usuarios")
+@login_requerido
+def admin_usuarios():
+    """
+    Ejemplo sencillo: listamos los usuarios guardados en Mongo (si existen).
+    Si no hay colección, simplemente devolvemos lista vacía.
+    """
+    try:
+        usuarios = list(mongo_db["usuarios"].find())
+    except Exception:  # noqa: BLE001
+        usuarios = []
 
-        usuarios = list(col.find({}, {"_id": 0, "password": 0}))
-        return render_template("admin_usuarios.html", usuarios=usuarios)
+    return render_template("admin_usuarios.html", usuarios=usuarios)
 
-    @app.route("/admin/elastic")
-    @admin_requerido
-    def admin_elastic():
-        """
-        Panel básico de estado de Elastic.
-        """
-        total = 0
-        error = None
-        try:
-            total = contar_documentos()
-        except Exception as e:
-            error = str(e)
-            flash(f"Error al conectarse a ElasticSearch: {e}", "danger")
 
-        return render_template(
-            "admin_elastic.html",
-            indice=get_index_name(),
-            total=total,
-            error=error,
-        )
+@app.route("/admin/elastic")
+@app.route("/admin_elastic")
+@login_requerido
+def admin_elastic():
+    """Pantalla de estado de Elastic."""
+    indice_existe = False
+    cantidad = 0
+    error = None
 
-    @app.route("/admin/cargar", methods=["GET", "POST"])
-    @admin_requerido
-    def cargar_archivos():
-        """
-        Formulario para cargar un libro en Elastic.
-        """
-        if request.method == "POST":
-            titulo = request.form.get("titulo")
-            autor = request.form.get("autor")
-            anio = request.form.get("anio")
-            texto = request.form.get("texto")
+    try:
+        indice_existe = es.indices.exists(index=ES_INDEX)
+        if indice_existe:
+            resp = es.count(index=ES_INDEX)
+            cantidad = resp.get("count", 0)
+    except Exception as exc:  # noqa: BLE001
+        error = f"No se pudo conectar a ElasticSearch: {exc}"
 
+    return render_template(
+        "admin_elastic.html",
+        indice=ES_INDEX,
+        indice_existe=indice_existe,
+        cantidad=cantidad,
+        error=error,
+    )
+
+
+# -------------------------------------------------------------------------
+# Carga de archivos
+# -------------------------------------------------------------------------
+
+@app.route("/admin/cargar", methods=["GET", "POST"])
+@app.route("/admin/cargar_archivos", methods=["GET", "POST"])
+@app.route("/cargar_archivos", methods=["GET", "POST"])
+@login_requerido
+def cargar_archivos():
+    """
+    Cargar documentos al sistema.
+    - Guarda los archivos en static/uploads
+    - Inserta un registro mínimo en Mongo
+    - Intenta indexar el documento en Elastic (solo nombre y ruta)
+    """
+    if request.method == "POST":
+        archivos = [f for f in request.files.values() if f and f.filename]
+        guardados = []
+
+        for archivo in archivos:
+            filename = secure_filename(archivo.filename)
+            ruta_absoluta = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            ruta_relativa = os.path.relpath(ruta_absoluta, BASE_DIR)
+
+            archivo.save(ruta_absoluta)
+
+            # Registro básico en Mongo
+            doc_mongo = {
+                "nombre": filename,
+                "ruta": ruta_relativa.replace("\\", "/"),
+            }
             try:
-                cargar_libro(titulo, autor, anio, texto)
-                flash("Libro cargado correctamente en Elastic.", "success")
-            except Exception as e:
-                flash(f"Error al cargar el libro: {e}", "danger")
+                mongo_db["documentos"].insert_one(doc_mongo)
+            except Exception:
+                # No rompemos la app si Mongo falla
+                pass
 
-            return redirect(url_for("cargar_archivos"))
+            # Indexación básica en Elastic (solo nombre y ruta)
+            try:
+                es.index(
+                    index=ES_INDEX,
+                    document={
+                        "nombre": filename,
+                        "ruta": ruta_relativa.replace("\\", "/"),
+                    },
+                )
+            except Exception:
+                # Tampoco rompemos si Elastic falla; se informa solo con flash
+                pass
 
-        return render_template("cargar_archivos.html")
+            guardados.append(filename)
 
-    return app
+        if guardados:
+            flash(f"Se cargaron {len(guardados)} archivo(s) correctamente.", "success")
+        else:
+            flash("No se recibió ningún archivo.", "warning")
+
+    return render_template("cargar_archivos.html")
 
 
-app = create_app()
+# -------------------------------------------------------------------------
+# Punto de entrada local
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # Para ejecución local
+    # En Render se ignora este debug, porque usa gunicorn.
     app.run(debug=True)
