@@ -1,208 +1,208 @@
 import os
-from functools import wraps
-
 from flask import (
     Flask,
     render_template,
     request,
     redirect,
     url_for,
-    flash,
     session,
+    flash,
 )
 
-from Helpers.elastic_helper import (
-    buscar_libros,
+from Helpers.mongoDB import (
+    get_usuarios_collection,
+    crear_usuario,
+    validar_login,
+    asegurar_admin_por_defecto,
+)
+
+from Helpers.elastic import (
     contar_documentos,
-    agregar_libro,
-    INDEX_NAME,
-)
-from Helpers.mongo_helper import (
-    verify_user,
-    create_user,
-    ensure_admin_user,
-    get_users_collection,
+    buscar_libros,
+    crear_indice_si_no_existe,
+    cargar_libro,
+    get_index_name,
 )
 
-app = Flask(__name__)
-
-# Clave de sesión para Flask (ya la tienes como SECRET_KEY en Render)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
-
-# Asegura que exista al menos un admin en Mongo
-ensure_admin_user()
+from Helpers.funciones import admin_requerido
+from Helpers.PLN import resumir_texto
 
 
-# --------- Decoradores de seguridad --------- #
+def create_app():
+    app = Flask(__name__)
 
-def login_required(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if "user" not in session:
-            return redirect(url_for("login", next=request.path))
-        return view(*args, **kwargs)
+    # Clave de sesión
+    app.secret_key = os.environ.get("SECRET_KEY", "cambia-esta-clave")
 
-    return wrapped
+    # Asegurar admin por defecto y existencia del índice al arrancar
+    asegurar_admin_por_defecto()
+    crear_indice_si_no_existe()
 
+    # Variables globales para las plantillas
+    @app.context_processor
+    def inject_globals():
+        return {
+            "app_nombre": "Mini Biblioteca BigData",
+        }
 
-def admin_required(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if "user" not in session or not session.get("is_admin"):
-            flash("Acceso solo para administradores.", "danger")
-            return redirect(url_for("login"))
-        return view(*args, **kwargs)
+    # ---------------- RUTAS PÚBLICAS ---------------- #
 
-    return wrapped
+    @app.route("/")
+    def index():
+        """
+        Landing page (página principal).
+        """
+        return render_template("landing.html")
 
+    @app.route("/buscar", methods=["GET"])
+    def buscar():
+        """
+        Buscador público.
+        """
+        texto = request.args.get("texto", "").strip() or None
+        autor = request.args.get("autor", "").strip() or None
+        anio_desde = request.args.get("anio_desde") or None
+        anio_hasta = request.args.get("anio_hasta") or None
 
-# --------- Páginas públicas --------- #
+        resultados = []
+        total = 0
 
-@app.route("/")
-def landing():
-    # Landing con info del proyecto
-    return render_template("landing.html")
+        # Solo buscar si hay al menos un filtro
+        if any([texto, autor, anio_desde, anio_hasta]):
+            try:
+                resultados, total = buscar_libros(
+                    texto=texto,
+                    autor=autor,
+                    anio_desde=anio_desde,
+                    anio_hasta=anio_hasta,
+                )
+                # Resumen corto del texto
+                for r in resultados:
+                    r["resumen"] = resumir_texto(r.get("texto"))
+            except Exception as e:
+                flash(f"Error al ejecutar la búsqueda: {e}", "danger")
 
-@app.route("/buscar", methods=["GET"])
-def buscar():
-    from elastic_helper import buscar_libros  # por si no está ya importado arriba
-
-    # Leer filtros desde la query-string (?texto=...&autor=...)
-    texto = (request.args.get("texto") or "").strip()
-    autor = (request.args.get("autor") or "").strip()
-    anio_desde_raw = (request.args.get("anio_desde") or "").strip()
-    anio_hasta_raw = (request.args.get("anio_hasta") or "").strip()
-
-    # Convertir años a entero si se puede
-    def to_int_or_none(v):
-        try:
-            return int(v) if v else None
-        except ValueError:
-            return None
-
-    anio_desde = to_int_or_none(anio_desde_raw)
-    anio_hasta = to_int_or_none(anio_hasta_raw)
-
-    # Si no hay filtros, mostramos todo (match_all) hasta 50 libros
-    if not (texto or autor or anio_desde or anio_hasta):
-        total, libros = buscar_libros(size=50)
-    else:
-        total, libros = buscar_libros(
-            texto=texto or None,
-            autor=autor or None,
-            anio_desde=anio_desde,
-            anio_hasta=anio_hasta,
-            size=50,
+        return render_template(
+            "buscador.html",
+            resultados=resultados,
+            total_resultados=total,
+            texto=texto or "",
+            autor=autor or "",
+            anio_desde=anio_desde or "",
+            anio_hasta=anio_hasta or "",
         )
 
-    return render_template(
-        "resultados.html",
-        libros=libros,
-        total=total,
-        texto=texto,
-        autor=autor,
-        anio_desde=anio_desde_raw,
-        anio_hasta=anio_hasta_raw,
-    )
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        """
+        Login de administrador.
+        """
+        if request.method == "POST":
+            username = request.form.get("username")
+            password = request.form.get("password")
 
+            usuario = validar_login(username, password)
+            if usuario:
+                session["usuario"] = usuario["username"]
+                session["es_admin"] = bool(usuario.get("es_admin"))
+                flash("Login correcto.", "success")
+                return redirect(url_for("admin"))
 
-# --------- Login / logout --------- #
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-
-        user = verify_user(username, password)
-        if user:
-            session["user"] = user["username"]
-            session["is_admin"] = bool(user.get("is_admin"))
-            flash("Login correcto.", "success")
-            next_url = request.args.get("next")
-            return redirect(next_url or url_for("admin"))
-        else:
             flash("Usuario o contraseña incorrectos.", "danger")
 
-    return render_template("login.html")
+        return render_template("login.html")
+
+    @app.route("/logout")
+    def logout():
+        """
+        Cerrar sesión.
+        """
+        session.clear()
+        flash("Sesión cerrada.", "info")
+        return redirect(url_for("index"))
+
+    # ---------------- RUTAS ADMIN ---------------- #
+
+    @app.route("/admin")
+    @admin_requerido
+    def admin():
+        """
+        Panel principal de administración.
+        """
+        return render_template("admin.html")
+
+    @app.route("/admin/usuarios", methods=["GET", "POST"])
+    @admin_requerido
+    def admin_usuarios():
+        """
+        Gestión de usuarios (crear y listar).
+        """
+        col = get_usuarios_collection()
+
+        if request.method == "POST":
+            username = request.form.get("username")
+            password = request.form.get("password")
+            es_admin = bool(request.form.get("es_admin"))
+
+            creado = crear_usuario(username, password, es_admin)
+            if creado:
+                flash("Usuario creado correctamente.", "success")
+            else:
+                flash("El usuario ya existe.", "warning")
+
+            return redirect(url_for("admin_usuarios"))
+
+        usuarios = list(col.find({}, {"_id": 0, "password": 0}))
+        return render_template("admin_usuarios.html", usuarios=usuarios)
+
+    @app.route("/admin/elastic")
+    @admin_requerido
+    def admin_elastic():
+        """
+        Panel básico de estado de Elastic.
+        """
+        total = 0
+        error = None
+        try:
+            total = contar_documentos()
+        except Exception as e:
+            error = str(e)
+            flash(f"Error al conectarse a ElasticSearch: {e}", "danger")
+
+        return render_template(
+            "admin_elastic.html",
+            indice=get_index_name(),
+            total=total,
+            error=error,
+        )
+
+    @app.route("/admin/cargar", methods=["GET", "POST"])
+    @admin_requerido
+    def cargar_archivos():
+        """
+        Formulario para cargar un libro en Elastic.
+        """
+        if request.method == "POST":
+            titulo = request.form.get("titulo")
+            autor = request.form.get("autor")
+            anio = request.form.get("anio")
+            texto = request.form.get("texto")
+
+            try:
+                cargar_libro(titulo, autor, anio, texto)
+                flash("Libro cargado correctamente en Elastic.", "success")
+            except Exception as e:
+                flash(f"Error al cargar el libro: {e}", "danger")
+
+            return redirect(url_for("cargar_archivos"))
+
+        return render_template("cargar_archivos.html")
+
+    return app
 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("Sesión cerrada.", "info")
-    return redirect(url_for("landing"))
-
-
-# --------- Panel admin --------- #
-
-@app.route("/admin")
-@admin_required
-def admin():
-    return render_template("admin.html")
-
-
-@app.route("/admin/usuarios", methods=["GET", "POST"])
-@admin_required
-def admin_usuarios():
-    users_coll = get_users_collection()
-
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-        is_admin = bool(request.form.get("is_admin"))
-
-        if not username or not password:
-            flash("Usuario y contraseña son obligatorios.", "danger")
-        else:
-            ok, msg = create_user(username, password, is_admin=is_admin)
-            flash(msg, "success" if ok else "danger")
-
-    usuarios = list(users_coll.find({}, {"password": 0}).sort("username", 1))
-    return render_template("admin_usuarios.html", usuarios=usuarios)
-
-
-@app.route("/admin/elastic")
-@admin_required
-def admin_elastic():
-    total_docs = contar_documentos()
-    return render_template(
-        "admin_elastic.html",
-        total_docs=total_docs,
-        index_name=INDEX_NAME,
-    )
-
-
-@app.route("/admin/cargar", methods=["GET", "POST"])
-@admin_required
-def admin_cargar():
-    if request.method == "POST":
-        titulo = request.form.get("titulo", "").strip()
-        autor = (request.form.get("autor") or "").strip() or "Desconocido"
-        anio = request.form.get("anio") or None
-        texto = request.form.get("texto") or ""
-
-        if not titulo:
-            flash("El título es obligatorio.", "danger")
-        else:
-            doc = {
-                "titulo": titulo,
-                "autor": autor,
-                "texto": texto,
-            }
-            if anio:
-                try:
-                    doc["anio"] = int(anio)
-                except ValueError:
-                    pass
-
-            agregar_libro(doc)
-            flash("Libro cargado en Elasticsearch.", "success")
-
-    return render_template("admin_cargar.html")
-
-
-# --------- Main local (no se usa en Render, pero sirve en local) --------- #
+app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Para ejecución local
+    app.run(debug=True)
