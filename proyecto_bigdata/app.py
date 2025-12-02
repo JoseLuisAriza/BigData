@@ -33,8 +33,8 @@ MONGO_DB_NAME = os.environ.get("MONGO_DB", "biblioteca_bigdata")
 ES_URL = os.environ.get("ES_URL", "http://localhost:9200")
 ES_INDEX = os.environ.get("ES_INDEX", "libros")
 
-ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
-ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin123")
+ADMIN_USER = os.getenv("ADMIN_USER", "admin")
+ADMIN_PASS = os.getenv("ADMIN_PASS", "admin123")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
