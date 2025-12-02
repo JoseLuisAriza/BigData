@@ -1,20 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Panel admin{% endblock %}
+{% block title %}Panel de administración · {{ app_nombre }}{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Panel de administración</h2>
-<p>Bienvenido, {{ session.get('user') }}.</p>
+<div class="mt-4">
+  <h1 class="h3 mb-3">Panel de administración</h1>
+  <p class="mb-4">Bienvenido, {{ session.get('usuario') }}.</p>
 
-<div class="list-group">
-  <a href="{{ url_for('admin_usuarios') }}" class="list-group-item list-group-item-action">
-    Administrar usuarios
-  </a>
-  <a href="{{ url_for('admin_elastic') }}" class="list-group-item list-group-item-action">
-    Administrar Elastic
-  </a>
-  <a href="{{ url_for('admin_cargar') }}" class="list-group-item list-group-item-action">
-    Cargar libros a Elastic
-  </a>
+  <div class="list-group">
+    <a href="{{ url_for('admin_usuarios') }}" class="list-group-item list-group-item-action">
+      Administrar usuarios
+    </a>
+    <a href="{{ url_for('admin_elastic') }}" class="list-group-item list-group-item-action">
+      Administrar Elastic
+    </a>
+    <a href="{{ url_for('cargar_archivos') }}" class="list-group-item list-group-item-action">
+      Cargar libros a Elastic
+    </a>
+  </div>
 </div>
 {% endblock %}
