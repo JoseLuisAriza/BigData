@@ -1,51 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Panel administrador - {{ app_nombre }}{% endblock %}
+{% block title %}Panel de administración - {{ app_nombre }}{% endblock %}
 
 {% block content %}
 <h1 class="mb-4">Panel de administración</h1>
 
-<div class="row">
-    <div class="col-md-6 mb-3">
-        <div class="card card-dark h-100">
-            <div class="card-body">
-                <h2 class="h5 card-title">Cargar e indexar libros</h2>
-                <p class="card-text">
-                    Sube un archivo JSON con los libros. Se guardarán en MongoDB y se indexarán en Elasticsearch.
-                </p>
-                <a href="{{ url_for('cargar_archivos') }}" class="btn btn-outline-primary">
-                    Ir a carga de archivos
-                </a>
-            </div>
-        </div>
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card card-dark h-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Cargar e indexar libros</h3>
+        <p class="card-text">
+          Sube un archivo JSON con los libros. Se guardarán en MongoDB y se indexarán en Elasticsearch.
+        </p>
+        <p class="card-text">
+          Libros en MongoDB: <strong>{{ estadisticas_mongo.total_libros_mongo }}</strong>
+        </p>
+        <p class="card-text">
+          Libros indexados en Elasticsearch: <strong>{{ total_indexados_es }}</strong>
+        </p>
+        <a href="{{ url_for('admin_cargar') }}" class="btn btn-primary mt-2">
+          Ir a carga de archivos
+        </a>
+      </div>
     </div>
+  </div>
 
-    <div class="col-md-6 mb-3">
-        <div class="card card-dark h-100">
-            <div class="card-body">
-                <h2 class="h5 card-title">Estado de Elasticsearch</h2>
-                <p class="card-text">
-                    Consulta el índice actual y la cantidad de documentos indexados.
-                </p>
-                <a href="{{ url_for('admin_elastic') }}" class="btn btn-outline-primary">
-                    Ir a administrar Elastic
-                </a>
-            </div>
-        </div>
+  <div class="col-lg-6">
+    <div class="card card-dark h-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Estado de Elasticsearch</h3>
+        <p class="card-text">
+          Consulta el índice actual y la cantidad de documentos indexados.
+        </p>
+        <a href="{{ url_for('admin_elastic') }}" class="btn btn-outline-primary mt-2">
+          Ir a administrar Elastic
+        </a>
+      </div>
     </div>
+  </div>
 
-    <div class="col-md-6 mb-3">
-        <div class="card card-dark h-100">
-            <div class="card-body">
-                <h2 class="h5 card-title">Gestión de usuarios</h2>
-                <p class="card-text">
-                    Sección informativa para administración de usuarios (demo).
-                </p>
-                <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-secondary">
-                    Ver usuarios
-                </a>
-            </div>
-        </div>
+  <div class="col-lg-6">
+    <div class="card card-dark h-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Gestión de usuarios</h3>
+        <p class="card-text">
+          Visualiza los usuarios de ejemplo del sistema (2 administradores y 2 usuarios de solo lectura).
+        </p>
+        <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-primary mt-2">
+          Ver usuarios
+        </a>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
