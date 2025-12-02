@@ -1,52 +1,48 @@
 {% extends "base.html" %}
+
 {% block content %}
+<h1 class="mb-4">Resultados de búsqueda</h1>
 
-<h1 class="mb-3">Resultados de búsqueda</h1>
-
-<form method="post" action="{{ url_for('buscar') }}" class="row g-3 mb-4">
-    <div class="col-md-6">
+<form class="row g-3 mb-4" method="get" action="{{ url_for('buscar') }}">
+    <div class="col-md-4">
         <label class="form-label">Texto libre</label>
         <input type="text" class="form-control" name="texto" value="{{ texto }}">
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label class="form-label">Autor</label>
         <input type="text" class="form-control" name="autor" value="{{ autor }}">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <label class="form-label">Año desde</label>
         <input type="number" class="form-control" name="anio_desde" value="{{ anio_desde }}">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <label class="form-label">Año hasta</label>
         <input type="number" class="form-control" name="anio_hasta" value="{{ anio_hasta }}">
     </div>
-    <div class="col-12">
-        <button type="submit" class="btn btn-primary mt-2">Buscar de nuevo</button>
-        <a href="{{ url_for('index') }}" class="btn btn-outline-light mt-2">Volver al inicio</a>
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Buscar de nuevo</button>
+        <!-- Aquí también evitamos url_for('index') -->
+        <a href="/" class="btn btn-outline-light">Volver al inicio</a>
     </div>
 </form>
 
-<p class="mb-3">
-    <strong>Total de resultados:</strong> {{ total }}
-</p>
+{% if total is not none %}
+    <p><strong>Total de resultados:</strong> {{ total }}</p>
 
-{% if documentos %}
-    <ul class="list-group">
-    {% for doc in documentos %}
-        <li class="list-group-item bg-dark text-light border-secondary mb-2">
-            <h5 class="mb-1">{{ doc.titulo or "Sin título" }}</h5>
-            <p class="mb-1">
-                <strong>Autor:</strong> {{ doc.autor or "Desconocido" }} |
-                <strong>Año:</strong> {{ doc.anio or "N/D" }}
-            </p>
-            {% if doc.ruta_pdf %}
-                <small class="text-muted">Ruta original: {{ doc.ruta_pdf }}</small>
-            {% endif %}
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No se encontraron libros con esos criterios.</p>
+    <div class="list-group">
+        {% for libro in libros %}
+            <div class="list-group-item bg-dark border-secondary text-light mb-2">
+                <h5 class="mb-1">{{ libro.titulo or "Título desconocido" }}</h5>
+                <p class="mb-1">
+                    <strong>Autor:</strong> {{ libro.autor or "Desconocido" }}
+                    &nbsp;|&nbsp;
+                    <strong>Año:</strong> {{ libro.anio or "N/D" }}
+                </p>
+            </div>
+        {% else %}
+            <p>No se encontraron libros con esos filtros.</p>
+        {% endfor %}
+    </div>
 {% endif %}
-
 {% endblock %}
