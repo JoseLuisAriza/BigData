@@ -5,3 +5,13 @@ body {
 .list-group-item {
     border-radius: 0.5rem;
 }
+body {
+    background-color: #121212;
+    color: #f8f9fa;
+}
+
+/* Fondo solo para la landing */
+body.landing-bg {
+    background: url("../img/biblioteca_robot.jpg") no-repeat center center fixed;
+    background-size: cover;
+}
