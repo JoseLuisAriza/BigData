@@ -1,74 +1,160 @@
-/* proyecto_bigdata/static/css/style.css */
+/* static/css/style.css */
 
+/* Paleta del usuario */
+:root {
+  --bg-oscuro: #350a06;
+  --bg-navbar: #56070c;
+  --bg-card: #8f3d38;
+  --accent: #efb810;
+  --accent-claro: #f9db5c;
+
+  --texto-claro: #ffffff;
+  --texto-suave: #f0e6d8;
+}
+
+/* Fuente: sistema (similar a la que tenías antes) */
 body {
-  background-color: #050811;
-  color: #f8f9fa;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-color: var(--bg-oscuro);
+  color: var(--texto-claro);
+  min-height: 100vh;
 }
 
+/* Navbar */
 .navbar {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  background-color: var(--bg-navbar) !important;
 }
 
-.contenido-oscuro {
-  color: #f8f9fa;
+.navbar-brand,
+.nav-link,
+.navbar-text {
+  color: var(--texto-claro) !important;
 }
 
-/* Cards oscuras legibles */
-.card-dark,
-.card.card-dark {
-  background-color: #141926;
-  color: #f8f9fa;
-  border: 1px solid #222738;
+.nav-link.active {
+  font-weight: 600;
 }
 
-.card-dark .card-title,
-.card-dark .card-text,
-.card-dark .card-body,
-.card-dark .card-header {
-  color: #f8f9fa;
-}
-
-/* Tablas sobre fondo oscuro */
-.table-dark {
-  --bs-table-bg: #141926;
-  --bs-table-striped-bg: #1a2130;
-  --bs-table-striped-color: #f8f9fa;
-  --bs-table-hover-bg: #212a3b;
-  --bs-table-hover-color: #f8f9fa;
-}
-
-/* Botones primarios un poco más vivos */
+/* Botones */
 .btn-primary {
-  background-color: #246bff;
-  border-color: #246bff;
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #1a1300;
+  font-weight: 600;
 }
 
-.btn-primary:hover {
-  background-color: #1850c0;
-  border-color: #1850c0;
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--accent-claro);
+  border-color: var(--accent-claro);
+  color: #1a1300;
 }
 
-/* Imagen de portada */
-.hero-img {
-  max-height: 380px;
-  object-fit: contain;
+/* Portada / index */
+.hero-section {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: radial-gradient(circle at top, #56070c 0, #350a06 60%, #1a0503 100%);
+  padding: 3rem 1rem;
 }
 
-/* Inputs sobre fondo oscuro */
-.form-control {
-  background-color: #0b1020;
-  border-color: #343a40;
-  color: #f8f9fa;
+.hero-content {
+  max-width: 700px;
+  margin: 0 auto;
 }
 
-.form-control:focus {
-  background-color: #0b1020;
-  color: #f8f9fa;
-  border-color: #246bff;
-  box-shadow: 0 0 0 0.2rem rgba(36, 107, 255, 0.25);
+.hero-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--accent-claro);
 }
 
-.btn-close {
-  filter: invert(1);
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--texto-suave);
+  margin-bottom: 2rem;
+}
+
+/* Para que, si la imagen no carga, NO se vea enorme ni deforme */
+.hero-image {
+  max-width: 320px;
+  height: auto;
+}
+
+/* Cards / paneles */
+.card {
+  background-color: var(--bg-card);
+  border: none;
+  color: var(--texto-claro);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-title {
+  color: var(--accent-claro);
+}
+
+/* Formularios */
+.form-control,
+.form-select {
+  background-color: #1f0b09;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--texto-claro);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: #25100e;
+  border-color: var(--accent);
+  color: var(--texto-claro);
+  box-shadow: 0 0 0 0.25rem rgba(239, 184, 16, 0.25);
+}
+
+.form-label {
+  color: var(--texto-suave);
+}
+
+/* Tablas */
+.table {
+  color: var(--texto-claro);
+}
+
+.table thead th {
+  border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Alertas */
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.15);
+  border-color: rgba(220, 53, 69, 0.6);
+  color: #ffc9c9;
+}
+
+/* Margen superior para el contenido bajo la navbar */
+.main-content {
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+/* Footer sencillo opcional */
+.footer {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  padding: 1rem 0;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 2rem;
 }
