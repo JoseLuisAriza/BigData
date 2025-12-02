@@ -1,51 +1,52 @@
 {% extends "base.html" %}
 
-{% block title %}Cargar archivos - {{ app_nombre }}{% endblock %}
+{% block title %}Cargar e indexar libros - {{ app_nombre }}{% endblock %}
 
 {% block content %}
 <h1 class="mb-4">Cargar e indexar libros</h1>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card card-dark mb-3">
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="archivo" class="form-label">
-                            Archivo JSON con la colección de libros
-                        </label>
-                        <input type="file" class="form-control" id="archivo" name="archivo" accept=".json" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            Cargar e indexar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card card-dark h-100">
+      <div class="card-body">
+        <h3 class="card-title">Archivo JSON con la colección de libros</h3>
+        <form method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <input type="file" name="archivo" class="form-control" accept=".json" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Cargar e indexar</button>
+          </div>
+        </form>
 
-        {% if estado.total_mongo is not none %}
-            <div class="alert alert-success">
-                Se cargaron {{ estado.total_mongo }} libros en MongoDB
-                y se indexaron {{ estado.total_elastic }} en Elasticsearch.
-            </div>
+        <hr>
+
+        {% if total_indexados_es is not none %}
+          <p>Libros cargados en Elasticsearch en esta operación: <strong>{{ total_indexados_es }}</strong></p>
+        {% endif %}
+        {% if total_insertados_mongo is not none %}
+          <p>Libros guardados en MongoDB en esta operación: <strong>{{ total_insertados_mongo }}</strong></p>
         {% endif %}
 
-        {% if estado.error %}
-            <div class="alert alert-danger">
-                Error: {{ estado.error }}
-            </div>
+        {% if error %}
+          <p class="text-danger small">{{ error }}</p>
         {% endif %}
+      </div>
     </div>
+  </div>
 
-    <div class="col-md-4">
-        <div class="card card-dark">
-            <div class="card-body">
-                <h2 class="h6">Información del índice</h2>
-                <p><strong>Total de documentos indexados:</strong> {{ total_docs_index }}</p>
-            </div>
-        </div>
+  <div class="col-lg-4">
+    <div class="card card-dark h-100">
+      <div class="card-body">
+        <h3 class="card-title">Información del índice</h3>
+        <p>Libros indexados ahora en Elasticsearch: <strong>{{ total_es_actual }}</strong></p>
+        <p>Libros totales en MongoDB: <strong>{{ estadisticas_mongo.total_libros_mongo }}</strong></p>
+        <p class="small text-muted">
+          Para pruebas rápidas puedes usar el archivo JSON de ejemplo
+          que construimos a partir del texto guía de Big Data.
+        </p>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
