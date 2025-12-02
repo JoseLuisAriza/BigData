@@ -1,68 +1,74 @@
+/* proyecto_bigdata/static/css/style.css */
+
 body {
-    background-color: #050814;
-    color: #f8f9fa;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #050811;
+  color: #f8f9fa;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-.bg-navbar {
-    background-color: #050814;
+.navbar {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
 }
 
-.main-container {
-    padding-top: 80px;
-    padding-bottom: 40px;
+.contenido-oscuro {
+  color: #f8f9fa;
 }
 
-/* Hero de la landing */
-.hero {
-    min-height: calc(100vh - 90px);
-    background-image: url("../img/biblioteca_robot.webp");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    color: #f8f9fa;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+/* Cards oscuras legibles */
+.card-dark,
+.card.card-dark {
+  background-color: #141926;
+  color: #f8f9fa;
+  border: 1px solid #222738;
 }
 
-/* Tarjetas oscuras */
-.card-dark {
-    background-color: #101522;
-    border: 1px solid #222636;
+.card-dark .card-title,
+.card-dark .card-text,
+.card-dark .card-body,
+.card-dark .card-header {
+  color: #f8f9fa;
 }
 
-/* Formularios */
-.form-control {
-    background-color: #050814;
-    color: #f8f9fa;
-    border-color: #33394d;
+/* Tablas sobre fondo oscuro */
+.table-dark {
+  --bs-table-bg: #141926;
+  --bs-table-striped-bg: #1a2130;
+  --bs-table-striped-color: #f8f9fa;
+  --bs-table-hover-bg: #212a3b;
+  --bs-table-hover-color: #f8f9fa;
 }
 
-.form-control:focus {
-    background-color: #050814;
-    color: #f8f9fa;
-    border-color: #0d6efd;
-    box-shadow: none;
-}
-
-/* Botones */
+/* Botones primarios un poco más vivos */
 .btn-primary {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+  background-color: #246bff;
+  border-color: #246bff;
 }
 
 .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0b5ed7;
+  background-color: #1850c0;
+  border-color: #1850c0;
 }
 
-/* Panel de administración en tema oscuro */
-.admin-page,
-.admin-page .card,
-.admin-page .card-title,
-.admin-page .card-text,
-.admin-page label,
-.admin-page p,
-.admin-page span {
-  color: #ffffff !important;
+/* Imagen de portada */
+.hero-img {
+  max-height: 380px;
+  object-fit: contain;
 }
 
+/* Inputs sobre fondo oscuro */
+.form-control {
+  background-color: #0b1020;
+  border-color: #343a40;
+  color: #f8f9fa;
+}
+
+.form-control:focus {
+  background-color: #0b1020;
+  color: #f8f9fa;
+  border-color: #246bff;
+  box-shadow: 0 0 0 0.2rem rgba(36, 107, 255, 0.25);
+}
+
+.btn-close {
+  filter: invert(1);
+}
