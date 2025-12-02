@@ -2,79 +2,94 @@
 
 ## Aplicación
 
-**Nombre de la aplicación:** Mini Biblioteca BigData  
-**URL en producción:** https://bigdata-ghvp.onrender.com  
+**Mini Biblioteca BigData**  
+Buscador de una biblioteca digital usando **Elasticsearch** para búsqueda de texto completo y **MongoDB Atlas** para la administración de usuarios y credenciales de acceso al panel de administrador.
 
-Aplicación web desarrollada en Flask que implementa un buscador de una biblioteca digital de libros en PDF usando **Elasticsearch** para la búsqueda de texto completo y **MongoDB Atlas** para la gestión de usuarios y administración.
+La aplicación está desplegada en Render en:
+
+> [https://bigdata-ghvp.onrender.com](https://bigdata-ghvp.onrender.com/)
 
 ---
 
 ## Autor
 
-**Nombre:** Jose Luis Ariza  
-**Email:** jarizaa@ucentral.edu.co
+- **Nombre:** Jose Luis Ariza  
+- **Email:** jarizaa@ucentral.edu.co
 
 ---
 
 ## Descripción
 
-La aplicación cumple los requisitos del proyecto de Big Data:
+Este proyecto implementa una mini biblioteca digital como entrega final de la materia de Big Data.  
 
-1. **Landing Page**  
-   Página de presentación de la “Mini Biblioteca BigData”, con navegación hacia el buscador público y el login de administrador.
+La solución:
 
-2. **Página de Login (MongoDB Atlas)**  
-   Formulario de inicio de sesión que valida usuario y contraseña contra la colección `usuarios` almacenada en MongoDB Atlas.
+1. Indexa libros en un índice de **Elasticsearch** (título, autor, año y ruta del PDF).
+2. Permite realizar búsquedas por:
+   - Texto libre (en título, autor y contenido).
+   - Autor.
+   - Rango de años.
+3. Muestra resultados paginados con título, autor, año y enlace al archivo PDF.
+4. Incluye un **panel de administración protegido** con login, donde el usuario administrador puede:
+   - Administrar usuarios (crear, listar, eliminar).
+   - Ver y administrar el estado de Elasticsearch.
+   - Cargar nuevos archivos PDF, ejecutando el pipeline de PLN para extraer texto y actualizar el índice.
 
-3. **Panel de Administración (solo después de login)**  
-   Menú de administración con acceso a tres módulos:
-   - **Administrar usuarios:** crear, listar y eliminar usuarios de la aplicación.
-   - **Administrar Elastic:** ver el estado del índice de libros y ejecutar consultas de prueba.
-   - **Cargar archivos a Elastic (PLN):** subir PDFs y procesarlos para indexarlos en Elasticsearch.
-
-4. **Página con buscador público**  
-   Buscador de libros que permite filtrar por:
-   - Texto libre (título o contenido)
-   - Autor
-   - Rango de años (desde / hasta)
-
-   Los resultados muestran título, autor, año y un enlace al PDF original (cuando existe).
+La aplicación está construida con **Flask**, **Elasticsearch (Elastic Cloud)** y **MongoDB Atlas**, y se despliega como *Web Service* en **Render**.
 
 ---
 
-## Tecnologías principales
+## Arquitectura general
 
-- Python 3 / Flask
-- Elasticsearch (servicio en la nube)
-- MongoDB Atlas
-- Bootstrap 5
-- Render.com (despliegue)
-- HTML y CSS
+- **Frontend**
+  - Plantillas HTML con **Jinja2**.
+  - Estilos con **Bootstrap 5** + CSS propio.
+  - Landing page con imagen de fondo tipo “biblioteca robotizada”.
+
+- **Backend (Flask)**
+  - Rutas públicas:
+    - `/` – Landing page.
+    - `/buscar` – Formulario de búsqueda y resultados.
+  - Rutas protegidas (requieren login):
+    - `/login` – Formulario de login de administrador.
+    - `/admin` – Panel principal de administración.
+    - `/admin/usuarios` – Gestión de usuarios (MongoDB).
+    - `/admin/elastic` – Gestión y estado de Elasticsearch.
+    - `/admin/cargar` – Carga de PDFs y reindexación.
+
+- **Servicios externos**
+  - **Elasticsearch Cloud**  
+    Índice principal: `libros_bigdata`.
+  - **MongoDB Atlas**  
+    Colección de usuarios para login y administración.
 
 ---
 
-## Estructura de carpetas (resumen)
+## Estructura de carpetas
 
 ```text
-BigData/
-└── proyecto_bigdata/
-    ├── app.py
-    ├── requirements.txt
-    ├── Helpers/
-    │   ├── __init__.py
-    │   ├── elastic_helper.py
-    │   └── mongo_helper.py
-    ├── static/
-    │   ├── css/
-    │   │   └── style.css
-    │   └── img/
-    │       └── biblioteca_robot.jpg
-    └── templates/
-        ├── base.html
-        ├── landing.html
-        ├── login.html
-        ├── admin.html
-        ├── admin_usuarios.html
-        ├── admin_elastic.html
-        ├── admin_cargar.html
-        └── resultados.html
+proyecto_bigdata/
+├─ app.py                 # Aplicación Flask principal
+├─ requirements.txt       # Dependencias de Python
+├─ helpers/
+│   ├─ __init__.py
+│   ├─ elastic_helper.py  # Búsquedas y operaciones en Elasticsearch
+│   ├─ mongo_helper.py    # Conexión y operaciones con MongoDB
+│   ├─ pln.py             # Lógica de PLN para extraer texto de PDFs
+│   └─ funciones.py       # Funciones auxiliares (utilidades)
+├─ templates/
+│   ├─ base.html          # Plantilla base con navbar
+│   ├─ index.html         # Landing page (con imagen de fondo)
+│   ├─ login.html         # Login administrador
+│   ├─ admin.html         # Panel admin principal
+│   ├─ admin_usuarios.html# Admin. de usuarios
+│   ├─ admin_elastic.html # Admin. de Elastic
+│   ├─ cargar_archivos.html # Carga de PDFs
+│   ├─ buscador.html      # Formulario de búsqueda
+│   └─ resultados.html    # Resultados de búsqueda
+└─ static/
+    ├─ css/
+    │   └─ style.css      # Estilos personalizados
+    ├─ img/
+    │   └─ biblioteca_robot.jpg  # Imagen de fondo landing
+    └─ uploads/           # Carpeta donde se guardan PDFs subidos
