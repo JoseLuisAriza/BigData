@@ -1,28 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Inicio - {{ app_nombre }}{% endblock %}
+{% block title %}Mini Biblioteca BigData{% endblock %}
 
 {% block content %}
-<div class="row align-items-center mt-5">
-  <div class="col-lg-6 mb-4">
-    <h1 class="display-4 fw-bold">Mini Biblioteca BigData</h1>
-    <p class="lead">
-      Proyecto final de Big Data: buscador de una biblioteca digital usando Elasticsearch y MongoDB.
+<div class="hero-section"
+     style="background-image: url('{{ url_for('static', filename='img/biblioteca_robot.png') }}');">
+  <div class="hero-overlay"></div>
+
+  <div class="container hero-content text-center">
+    <h1 class="hero-title mb-3">Mini Biblioteca BigData</h1>
+    <p class="hero-subtitle mb-4">
+      Proyecto final de Big Data: buscador de una biblioteca digital usando
+      GitHub, Elasticsearch, MongoDB y Render.com.
     </p>
-    <p>
-      Usa el panel de administración para cargar un archivo JSON con libros
-      y luego prueba el buscador por texto libre, autor y año.
+    <p class="mb-4">
+      Usa el panel de administración para cargar un archivo JSON con libros y luego
+      prueba el buscador por texto libre, autor y/o año.
     </p>
-    <a href="{{ url_for('buscar') }}" class="btn btn-primary btn-lg mt-3">
+    <a href="{{ url_for('buscar') }}" class="btn btn-primary btn-lg">
       Ir al buscador
     </a>
-  </div>
-  <div class="col-lg-6 text-center">
-    <img
-      src="{{ url_for('static', filename='img/biblioteca_robot.png') }}"
-      alt="Ilustración de biblioteca Big Data"
-      class="img-fluid hero-img"
-    >
   </div>
 </div>
 {% endblock %}
