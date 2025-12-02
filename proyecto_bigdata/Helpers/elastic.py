@@ -75,21 +75,32 @@ def contar_documentos(client: Elasticsearch, indice: str) -> int:
 # FUNCIÓN: Buscar libros
 # ============================================================
 
-def buscar_libros(client: Elasticsearch, query: str, indice: str = "libros") -> List[dict]:
+def buscar_libros(client: Elasticsearch, texto: str = "", autor: str = "", anio_desde: str = "", anio_hasta: str = "", indice: str = "libros") -> List[dict]:
     """
-    Realiza una búsqueda por texto en el índice especificado.
+    Búsqueda flexible por texto, autor y rango de años.
     """
     try:
-        response = client.search(
-            index=indice,
-            query={"multi_match": {"query": query, "fields": ["titulo", "autor", "descripcion"]}},
-            size=20
-        )
-        hits = response["hits"]["hits"]
-        return [hit["_source"] for hit in hits]
+        must = []
+        if texto:
+            must.append({"multi_match": {"query": texto, "fields": ["titulo", "descripcion"]}})
+        if autor:
+            must.append({"match": {"autor": autor}})
+        if anio_desde or anio_hasta:
+            rango = {}
+            if anio_desde:
+                rango["gte"] = anio_desde
+            if anio_hasta:
+                rango["lte"] = anio_hasta
+            must.append({"range": {"anio": rango}})
+
+        query = {"bool": {"must": must}} if must else {"match_all": {}}
+
+        response = client.search(index=indice, query=query, size=50)
+        return [hit["_source"] for hit in response["hits"]["hits"]]
     except Exception as e:
         print(f"[ERROR] No se pudo buscar libros: {e}")
         return []
+
 
 
 # ============================================================
