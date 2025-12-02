@@ -12,7 +12,7 @@ Aplicación web desarrollada en Flask que implementa un buscador de una bibliote
 ## Autor
 
 **Nombre:** Jose Luis Ariza  
-**Email:** jose.luis.ariza@xxxxxx.edu.co  <!-- pon aquí el que quieras mostrar -->
+**Email:** jarizaa@ucentral.edu.co
 
 ---
 
