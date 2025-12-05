@@ -26,9 +26,8 @@ La solución:
 
 1. Indexa libros en un índice de **Elasticsearch** (título, autor, año y ruta del PDF).
 2. Permite realizar búsquedas por:
-   - Texto libre (en título, autor y contenido).
+   - Título.
    - Autor.
-   - Rango de años.
 3. Muestra resultados paginados con título, autor, año y enlace al archivo PDF.
 4. Incluye un **panel de administración protegido** con login, donde el usuario administrador puede:
    - Administrar usuarios (crear, listar, eliminar).
