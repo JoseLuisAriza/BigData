@@ -15,23 +15,6 @@
     </div>
   </div>
 
-  <div class="col-lg-6">
-    <div class="card card-dark h-100 shadow">
-      <div class="card-body">
-        <h3 class="card-title">Cargar e indexar libros</h3>
-        <p class="card-text">
-          Sube un archivo JSON con los libros. Se guardarán en MongoDB y se indexarán en Elasticsearch.
-        </p>
-        <p class="card-text">
-          Libros indexados en Elasticsearch: <strong>{{ total_indexados_es }}</strong>
-        </p>
-        <a href="{{ url_for('admin_cargar') }}" class="btn btn-primary mt-2">
-          Ir a carga de archivos
-        </a>
-      </div>
-    </div>
-  </div>
-
   {% if error_ping %}
     <div class="alert alert-danger" role="alert">
       No se pudo hacer ping al servidor de Elasticsearch.<br>
