@@ -39,26 +39,6 @@
           value="{{ autor }}"
         >
       </div>
-      <div class="col-md-2">
-        <label for="anio_desde" class="form-label">Año desde</label>
-        <input
-          type="number"
-          class="form-control"
-          id="anio_desde"
-          name="anio_desde"
-          value="{{ anio_desde }}"
-        >
-      </div>
-      <div class="col-md-2">
-        <label for="anio_hasta" class="form-label">Año hasta</label>
-        <input
-          type="number"
-          class="form-control"
-          id="anio_hasta"
-          name="anio_hasta"
-          value="{{ anio_hasta }}"
-        >
-      </div>
       <div class="col-md-1 d-flex align-items-end">
         <button type="submit" class="btn btn-primary w-200">Buscar</button>
       </div>
@@ -93,7 +73,6 @@
           <tr>
             <td>{{ libro.titulo }}</td>
             <td>{{ libro.autor }}</td>
-            <td>{{ libro.anio }}</td>
           </tr>
           {% endfor %}
         </tbody>
