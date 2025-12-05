@@ -69,8 +69,6 @@ def contar_documentos(index: str = INDICE_LIBROS) -> int:
 def _build_search_query(
     texto: str = "",
     autor: str = "",
-    anio_desde: int | None = None,
-    anio_hasta: int | None = None,
 ) -> Dict[str, Any]:
     """
     Construye la query bool para buscar libros según texto, autor y rango de años.
@@ -96,16 +94,6 @@ def _build_search_query(
         must.append({"match": {"autor": autor}})
 
     rango: Dict[str, Any] = {}
-    if anio_desde is not None:
-        rango["gte"] = int(anio_desde)
-    if anio_hasta is not None:
-        rango["lte"] = int(anio_hasta)
-
-    if rango:
-        filtros.append({"range": {"anio": rango}})
-
-    if not must:
-        must.append({"match_all": {}})
 
     query: Dict[str, Any] = {"bool": {"must": must}}
     if filtros:
@@ -117,8 +105,6 @@ def _build_search_query(
 def buscar_libros(
     texto: str = "",
     autor: str = "",
-    anio_desde: int | None = None,
-    anio_hasta: int | None = None,
     tamano: int = 50,
 ) -> Tuple[List[Dict[str, Any]], int]:
     """
@@ -134,7 +120,7 @@ def buscar_libros(
     if not es.indices.exists(index=INDICE_LIBROS):
         return [], 0
 
-    query = _build_search_query(texto, autor, anio_desde, anio_hasta)
+    query = _build_search_query(texto, autor)
 
     resp = es.search(
         index=INDICE_LIBROS,
@@ -156,7 +142,6 @@ def buscar_libros(
                 "id_libro": src.get("id_libro"),
                 "titulo": src.get("titulo"),
                 "autor": src.get("autor"),
-                "anio": src.get("anio"),
                 "ruta_pdf": src.get("ruta_pdf"),
                 "score": hit.get("_score"),
             }
@@ -187,7 +172,6 @@ def parsear_json_libros(json_str: str) -> List[Dict[str, Any]]:
                 "id_libro": raw.get("id_libro", i),
                 "titulo": raw.get("titulo"),
                 "autor": raw.get("autor"),
-                "anio": raw.get("anio"),
                 "ruta_pdf": raw.get("ruta_pdf"),
             }
         )
