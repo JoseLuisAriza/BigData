@@ -4,12 +4,14 @@
 
 {% block content %}
 <div class="container py-5">
-  <h1 class="mb-4 text-center">Estado del Índice</h1>
-  <div class="card bg-card text-white mb-4">
-    <div class="card-body">
-      <p class="card-text">
+  <h1 class="mb-4">Estado del Índice</h1>
+  <div class="col-lg-6">
+    <div class="card card-dark h-100 shadow">
+      <div class="card-body">
+        <p class="card-text">
           Libros indexados en Elasticsearch: <strong>{{ total_indexados_es }}</strong>
-      </p>
+        </p>
+      </div>
     </div>
   </div>
 </div>
@@ -26,16 +28,6 @@
           id="texto"
           name="texto"
           value="{{ texto }}"
-        >
-      </div>
-      <div class="col-md-3">
-        <label for="autor" class="form-label">Autor</label>
-        <input
-          type="text"
-          class="form-control"
-          id="autor"
-          name="autor"
-          value="{{ autor }}"
         >
       </div>
       <div class="col-md-1 d-flex align-items-end">
@@ -63,14 +55,12 @@
         <thead>
           <tr>
             <th>Título</th>
-            <th>Autor</th>
           </tr>
         </thead>
         <tbody>
           {% for libro in resultados %}
           <tr>
             <td>{{ libro.titulo }}</td>
-            <td>{{ libro.autor }}</td>
           </tr>
           {% endfor %}
         </tbody>
