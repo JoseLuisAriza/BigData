@@ -14,9 +14,6 @@
           Sube un archivo JSON con los libros. Se guardarán en MongoDB y se indexarán en Elasticsearch.
         </p>
         <p class="card-text">
-          Libros en MongoDB: <strong>{{ estadisticas_mongo.total_libros_mongo }}</strong>
-        </p>
-        <p class="card-text">
           Libros indexados en Elasticsearch: <strong>{{ total_indexados_es }}</strong>
         </p>
         <a href="{{ url_for('admin_cargar') }}" class="btn btn-primary mt-2">
@@ -33,7 +30,7 @@
         <p class="card-text">
           Consulta el índice actual y la cantidad de documentos indexados.
         </p>
-        <a href="{{ url_for('admin_elastic') }}" class="btn btn-outline-primary mt-2">
+        <a href="{{ url_for('admin_elastic') }}" class="btn btn-primary mt-2">
           Ir a administrar Elastic
         </a>
       </div>
@@ -47,7 +44,7 @@
         <p class="card-text">
           Visualiza los usuarios de ejemplo del sistema.
         </p>
-        <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-primary mt-2">
+        <a href="{{ url_for('admin_usuarios') }}" class="btn btn-primary mt-2">
           Ver usuarios
         </a>
       </div>
