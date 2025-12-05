@@ -48,14 +48,14 @@ La aplicación está construida con **Flask**, **Elasticsearch (Elastic Cloud)**
 
 - **Backend (Flask)**
   - Rutas públicas:
-    - `/` – Landing page.
-    - `/buscar` – Formulario de búsqueda y resultados.
+    - `/`               – Landing page.
+    - `/buscar`         – Formulario de búsqueda y resultados.
   - Rutas protegidas (requieren login):
-    - `/login` – Formulario de login de administrador.
-    - `/admin` – Panel principal de administración.
+    - `/login`          – Formulario de login de administrador.
+    - `/admin`          – Panel principal de administración.
     - `/admin/usuarios` – Gestión de usuarios (MongoDB).
-    - `/admin/elastic` – Gestión y estado de Elasticsearch.
-    - `/admin/cargar` – Carga de PDFs y reindexación.
+    - `/admin/elastic`  – Gestión y estado de Elasticsearch.
+    - `/admin/cargar`   – Carga de PDFs y reindexación.
 
 - **Servicios externos**
   - **Elasticsearch Cloud**  
@@ -69,27 +69,29 @@ La aplicación está construida con **Flask**, **Elasticsearch (Elastic Cloud)**
 
 ```text
 proyecto_bigdata/
-├─ app.py                 # Aplicación Flask principal
-├─ requirements.txt       # Dependencias de Python
+├─ app.py                         # Aplicación Flask principal
+├─ requirements.txt               # Dependencias de Python
 ├─ helpers/
 │   ├─ __init__.py
-│   ├─ elastic_helper.py  # Búsquedas y operaciones en Elasticsearch
-│   ├─ mongo_helper.py    # Conexión y operaciones con MongoDB
-│   ├─ pln.py             # Lógica de PLN para extraer texto de PDFs
-│   └─ funciones.py       # Funciones auxiliares (utilidades)
+│   ├─ elastic_helper.py          # Búsquedas y operaciones en Elasticsearch
+│   ├─ mongo_helper.py            # Conexión y operaciones con MongoDB
+│   ├─ pln.py                     # Lógica de PLN para extraer texto de PDFs
+│   └─ funciones.py               # Funciones auxiliares (utilidades)
+├─ scritps/
+│   ├─ generar_json_libros.py     # Plantilla base con navbar
 ├─ templates/
-│   ├─ base.html          # Plantilla base con navbar
-│   ├─ index.html         # Landing page (con imagen de fondo)
-│   ├─ login.html         # Login administrador
-│   ├─ admin.html         # Panel admin principal
-│   ├─ admin_usuarios.html# Admin. de usuarios
-│   ├─ admin_elastic.html # Admin. de Elastic
-│   ├─ cargar_archivos.html # Carga de PDFs
-│   ├─ buscador.html      # Formulario de búsqueda
-│   └─ resultados.html    # Resultados de búsqueda
+│   ├─ base.html                  # Plantilla base con navbar
+│   ├─ index.html                 # Landing page (con imagen de fondo)
+│   ├─ login.html                 # Login administrador
+│   ├─ admin.html                 # Panel admin principal
+│   ├─ admin_usuarios.html        # Admin. de usuarios
+│   ├─ admin_elastic.html         # Admin. de Elastic
+│   ├─ cargar_archivos.html       # Carga de PDFs
+│   ├─ buscador.html              # Formulario de búsqueda
+│   └─ resultados.html            # Resultados de búsqueda
 └─ static/
     ├─ css/
-    │   └─ style.css      # Estilos personalizados
+    │   └─ style.css              # Estilos personalizados
     ├─ img/
-    │   └─ biblioteca_robot.jpg  # Imagen de fondo landing
-    └─ uploads/           # Carpeta donde se guardan PDFs subidos
+    │   └─ biblioteca_robot.jpg   # Imagen de fondo landing
+    └─ uploads/                   # Carpeta donde se guardan PDFs subidos
