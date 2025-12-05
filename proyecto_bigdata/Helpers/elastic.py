@@ -68,30 +68,25 @@ def contar_documentos(index: str = INDICE_LIBROS) -> int:
 # ---------------------------------------------------------------------
 def _build_search_query(
     texto: str = "",
-    autor: str = "",
 ) -> Dict[str, Any]:
     """
-    Construye la query bool para buscar libros según texto, autor y rango de años.
+    Construye la query bool para buscar libros según texto libre.
     """
     must: List[Dict[str, Any]] = []
     filtros: List[Dict[str, Any]] = []
 
     texto = (texto or "").strip()
-    autor = (autor or "").strip()
 
     if texto:
         must.append(
             {
                 "multi_match": {
                     "query": texto,
-                    "fields": ["titulo^3", "autor^2", "ruta_pdf"],
+                    "fields": ["titulo^3", "ruta_pdf"],
                     "type": "best_fields",
                 }
             }
         )
-
-    if autor:
-        must.append({"match": {"autor": autor}})
 
     rango: Dict[str, Any] = {}
 
@@ -104,7 +99,6 @@ def _build_search_query(
 
 def buscar_libros(
     texto: str = "",
-    autor: str = "",
     tamano: int = 50,
 ) -> Tuple[List[Dict[str, Any]], int]:
     """
@@ -113,7 +107,7 @@ def buscar_libros(
     - total de coincidencias
 
     Esta firma coincide con cómo lo llama app.py:
-    buscar_libros(texto=..., autor=..., anio_desde=..., anio_hasta=...)
+    buscar_libros(texto=...)
     """
     es = get_es_client()
 
@@ -141,7 +135,6 @@ def buscar_libros(
             {
                 "id_libro": src.get("id_libro"),
                 "titulo": src.get("titulo"),
-                "autor": src.get("autor"),
                 "ruta_pdf": src.get("ruta_pdf"),
                 "score": hit.get("_score"),
             }
@@ -171,7 +164,6 @@ def parsear_json_libros(json_str: str) -> List[Dict[str, Any]]:
             {
                 "id_libro": raw.get("id_libro", i),
                 "titulo": raw.get("titulo"),
-                "autor": raw.get("autor"),
                 "ruta_pdf": raw.get("ruta_pdf"),
             }
         )
