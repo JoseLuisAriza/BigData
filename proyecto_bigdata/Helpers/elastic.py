@@ -114,7 +114,7 @@ def buscar_libros(
     if not es.indices.exists(index=INDICE_LIBROS):
         return [], 0
 
-    query = _build_search_query(texto, autor)
+    query = _build_search_query(texto)
 
     resp = es.search(
         index=INDICE_LIBROS,
