@@ -73,19 +73,17 @@ def index():
 @app.route("/buscar", methods=["GET"])
 def buscar():
     texto = request.args.get("texto", "").strip()
-    autor = request.args.get("autor", "").strip()
 
     resultados = []
     total_resultados = 0
     error = None
 
-    hay_filtros = any([texto, autor])
+    hay_filtros = any([texto])
 
     if hay_filtros:
         try:
             resultados, total_resultados = buscar_libros(
                 texto=texto,
-                autor=autor,
             )
         except Exception as e:
             error = f"Error al consultar Elasticsearch: {e}"
@@ -95,7 +93,6 @@ def buscar():
         "buscador.html",
         app_nombre=APP_NAME,
         texto=texto,
-        autor=autor,
         resultados=resultados,
         total_resultados=total_resultados,
         error=error,
