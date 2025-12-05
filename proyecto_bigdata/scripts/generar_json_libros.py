@@ -34,16 +34,6 @@ CARPETA_SALIDA = "/content/drive/MyDrive/Ucentral/2025S2/BigData/Final/Data"
 RUTA_JSON_SALIDA = os.path.join(CARPETA_SALIDA, "libros_minibiblioteca.json")
 
 
-def extraer_anio_desde_nombre(nombre_archivo):
-    """
-    Busca un año de 4 dígitos (entre 1900 y 2099) en el nombre del archivo.
-    Si no encuentra, devuelve None.
-    """
-    base = os.path.splitext(nombre_archivo)[0]
-    m = re.search(r"(19|20)\d{2}", base)
-    if m:
-        return int(m.group(0))
-    return None
 
 
 documentos = []
@@ -69,8 +59,7 @@ for nombre in os.listdir(CARPETA_PDFS):
         doc = {
             "id_libro": len(documentos) + 1,
             "titulo": titulo,
-            "autor": None,     # si luego tienes autor lo puedes actualizar
-            "anio": anio,
+            "autor": None,
             "ruta_pdf": ruta_pdf
         }
 
@@ -103,7 +92,6 @@ mapping = {
             "id_libro":  {"type": "integer"},
             "titulo":    {"type": "text"},
             "autor":     {"type": "text"},
-            "anio":      {"type": "integer"},
             "ruta_pdf":  {"type": "keyword"}
         }
     }
@@ -178,7 +166,6 @@ def cargar_json(ruta_json):
             "id_libro": d.get("id_libro"),
             "titulo": d.get("titulo"),
             "autor": d.get("autor"),
-            "anio": d.get("anio"),
             "ruta_pdf": d.get("ruta_pdf"),
         })
 
