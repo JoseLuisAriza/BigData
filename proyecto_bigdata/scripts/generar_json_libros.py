@@ -9,11 +9,11 @@ drive.mount('/content/drive')
 
 from elasticsearch import Elasticsearch
 
-ES_CLOUD_URL = "https://55a79f5769ba4e0fa584f902639b9a95.us-central1.gcp.cloud.es.io"
+ES_CLOUD_ID = "6a9307eaf924496cab8833fc259c98c9:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyQ1NWE3OWY1NzY5YmE0ZTBmYTU4NGY5MDI2MzliOWE5NSQ0N2VlNmQ5M2M1YWM0OGM1YjQyMzAyNDY5MzI5ZWYzNg=="
 ES_API_KEY   = "czl4ZTJKb0JTWHI2NmlYUzFIY286VUhfUmZidjdCQVcwSjdESFEybXl5Zw=="
 
 es = Elasticsearch(
-    ES_CLOUD_URL,
+    ES_CLOUD_ID,
     api_key=ES_API_KEY,
     verify_certs=True
 )
@@ -101,8 +101,8 @@ mapping = {
     "mappings": {
         "properties": {
             "id_libro":  {"type": "integer"},
-            "titulo":    {"type": "text", "analyzer": "spanish"},
-            "autor":     {"type": "text", "analyzer": "spanish"},
+            "titulo":    {"type": "text"},
+            "autor":     {"type": "text"},
             "anio":      {"type": "integer"},
             "ruta_pdf":  {"type": "keyword"}
         }
