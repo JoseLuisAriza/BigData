@@ -24,7 +24,7 @@ Este proyecto implementa una mini biblioteca digital como entrega final de la ma
 
 La solución:
 
-1. Indexa libros en un índice de **Elasticsearch** (título, autor, año y ruta del PDF).
+1. Indexa libros en un índice de **Elasticsearch** (título, autor y ruta del PDF).
 2. Permite realizar búsquedas por:
    - Título.
    - Autor.
