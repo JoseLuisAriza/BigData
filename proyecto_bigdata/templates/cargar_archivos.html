@@ -38,8 +38,9 @@
       <div class="card bg-card-soft text-white h-100">
         <div class="card-body">
           <h5 class="card-title mb-3">Información del índice</h5>
-          <p class="mb-1"><strong>Libros indexados ahora en Elasticsearch:</strong> {{ total_en_elastic }}</p>
-          <p class="mb-0"><strong>Libros totales en MongoDB:</strong> {{ total_en_mongo }}</p>
+          <p class="card-text">
+          Libros indexados en Elasticsearch: <strong>{{ total_indexados_es }}</strong>
+        </p>
         </div>
       </div>
     </div>
