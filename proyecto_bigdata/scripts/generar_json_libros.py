@@ -59,7 +59,6 @@ for nombre in os.listdir(CARPETA_PDFS):
         doc = {
             "id_libro": len(documentos) + 1,
             "titulo": titulo,
-            "autor": None,
             "ruta_pdf": ruta_pdf
         }
 
@@ -91,7 +90,6 @@ mapping = {
         "properties": {
             "id_libro":  {"type": "integer"},
             "titulo":    {"type": "text"},
-            "autor":     {"type": "text"},
             "ruta_pdf":  {"type": "keyword"}
         }
     }
