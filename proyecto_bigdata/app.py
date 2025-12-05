@@ -74,22 +74,18 @@ def index():
 def buscar():
     texto = request.args.get("texto", "").strip()
     autor = request.args.get("autor", "").strip()
-    anio_desde = request.args.get("anio_desde", "").strip()
-    anio_hasta = request.args.get("anio_hasta", "").strip()
 
     resultados = []
     total_resultados = 0
     error = None
 
-    hay_filtros = any([texto, autor, anio_desde, anio_hasta])
+    hay_filtros = any([texto, autor])
 
     if hay_filtros:
         try:
             resultados, total_resultados = buscar_libros(
                 texto=texto,
                 autor=autor,
-                anio_desde=anio_desde,
-                anio_hasta=anio_hasta,
             )
         except Exception as e:
             error = f"Error al consultar Elasticsearch: {e}"
@@ -100,8 +96,6 @@ def buscar():
         app_nombre=APP_NAME,
         texto=texto,
         autor=autor,
-        anio_desde=anio_desde,
-        anio_hasta=anio_hasta,
         resultados=resultados,
         total_resultados=total_resultados,
         error=error,
